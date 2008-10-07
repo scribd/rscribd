@@ -1,0 +1,27 @@
+=== 0.1.1 / 2008-10-6
+
+* Fixed bug that occurs when parsing empty elements.
+
+=== 0.1.0 / 2008-10-1
+
+* Changed Scribd::Document.find method to take an ActiveRecord-style scope
+  variable (which can be :all, :first, etc.) as its first parameter. Options are
+  now specified as the second parameter.
+* Scribd::Document.find can also be used with a single integer to find a
+  document by ID.
+* Scribd::Document.find now takes offset and limit parameters (for scopes that
+  return arrays of documents).
+* Added a Scribd::Document#download_url method.
+* Should no longer raise an exception when logging in.
+
+=== 0.0.5 / 2008-09-25
+
+* Updated RScribd to work with server-side API changes.
+
+=== 0.0.4 / 2008-02-20
+
+* Fixed a bug that caused errors when Rails models shared the same name as Scribd objects.
+
+=== 0.0.3 / 2008-02-18
+
+* Initial RubyForge project

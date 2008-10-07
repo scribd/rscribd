@@ -1,0 +1,14 @@
+History.txt
+Manifest.txt
+README.txt
+Rakefile
+lib/scribdapi.rb
+lib/scribddoc.rb
+lib/scribderrors.rb
+lib/scribdmultiparthack.rb
+lib/scribdresource.rb
+lib/rscribd.rb
+lib/scribduser.rb
+sample/01_upload.rb
+sample/02_user.rb
+sample/test.txt
