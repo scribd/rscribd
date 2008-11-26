@@ -104,6 +104,7 @@ module Scribd
         ext = @attributes[:file].split('.').last unless @attributes[:file].index('.').nil?
         fields[:doc_type] = @attributes[:type]
         fields[:doc_type] ||= ext
+        fields[:doc_type].downcase! if fields[:doc_type]
         fields[:rev_id] = @attributes[:doc_id]
         fields[:access] = @attributes[:access]
       end
