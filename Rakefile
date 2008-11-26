@@ -1,7 +1,6 @@
-# -*- ruby -*-
-
 require 'rubygems'
 require 'hoe'
+require 'spec/rake/spectask'
 
 Hoe.new('rscribd', '0.1.2') do |p|
   p.rubyforge_name = 'rscribd'
@@ -15,4 +14,8 @@ Hoe.new('rscribd', '0.1.2') do |p|
   p.remote_rdoc_dir = ''
 end
 
-# vim: syntax=Ruby
+desc "Verify gem specs"
+Spec::Rake::SpecTask.new do |t|
+  t.spec_files = FileList['spec/**/*.rb']
+  t.spec_opts = [ '-cfs' ]
+end
