@@ -105,6 +105,7 @@ module Scribd
         fields[:doc_type] = @attributes[:type]
         fields[:doc_type] ||= ext
         fields[:rev_id] = @attributes[:doc_id]
+        fields[:access] = @attributes[:access]
       end
       fields[:session_key] = @attributes[:owner].session_key if @attributes[:owner]
       response = nil
@@ -138,6 +139,7 @@ module Scribd
       
       fields.delete :file
       fields.delete :type
+      fields.delete :access
       
       changed_attributes = fields.dup # changed_attributes is what we will stick into @attributes once we update remotely
       
