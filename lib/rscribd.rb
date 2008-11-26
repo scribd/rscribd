@@ -3,6 +3,12 @@
 module Scribd # :nodoc:
 end
 
+class Symbol
+  def to_proc
+    Proc.new { |*args| args.shift.__send__(self, *args) }
+  end unless method_defined?(:to_proc)
+end
+
 class Hash #:nodoc:
    # Taken from Rails, with appreciation to DHH
    def stringify_keys
