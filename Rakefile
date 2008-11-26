@@ -3,7 +3,7 @@
 require 'rubygems'
 require 'hoe'
 
-Hoe.new('rscribd', '0.1.1') do |p|
+Hoe.new('rscribd', '0.1.2') do |p|
   p.rubyforge_name = 'rscribd'
   p.author = 'Jared Friedman'
   p.email = 'api@scribd.com'

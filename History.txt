@@ -1,3 +1,10 @@
+=== 0.1.2 / 2008-11-26
+
+* Happy Thanksgiving!
+* Potential security issue resolved by having the document's privacy setting set
+  in the same request as the upload.
+* Bug fixed where some files with uppercase extensions would not convert.
+
 === 0.1.1 / 2008-10-6
 
 * Fixed bug that occurs when parsing empty elements.
