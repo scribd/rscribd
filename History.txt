@@ -1,3 +1,14 @@
+=== 1.0.0 / 2008-11-26
+
+* First release version.
+* Comprehensive RSpec of all code.
+* read_attributes method now works correctly.
+* Uploading a document as a not-yet-created user no longer uploads it into the
+  default API account.
+* Finding documents owned by a not-yet-created user now returns nil.
+* Symbol#to_proc definedd for RScribd use in non-Rails projects.
+* Minor code style improvements.
+
 === 0.1.2 / 2008-11-26
 
 * Happy Thanksgiving!
