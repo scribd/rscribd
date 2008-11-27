@@ -166,7 +166,7 @@ module Scribd
       raise ArgumentError, "options must be a hash" unless options.kind_of? Hash
       
       docs_by_user = docs.inject(Hash.new { |hash, key| hash[key] = Array.new }) { |hash, doc| hash[doc.owner] << doc; hash }
-      docs_by_user.each { |user, doc_list| API.instance.send_request 'docs.changeSettings', options.merge(:doc_ids => doc_list.collect { |doc| doc.id }.join(','), :session_key => user.session_key) }
+      docs_by_user.each { |user, doc_list| API.instance.send_request 'docs.changeSettings', options.merge(:doc_ids => doc_list.collect(&:id).join(','), :session_key => user.session_key) }
     end
     
     # === Finding by query
@@ -221,10 +221,8 @@ module Scribd
       end
     end
     
-    # Synonym for create.
-    
-    def self.upload(options={})
-      create options
+    class << self
+      alias_method :upload, :create
     end
     
     # Returns the conversion status of this document. When a document is
