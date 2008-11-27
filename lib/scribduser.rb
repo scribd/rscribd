@@ -85,6 +85,7 @@ module Scribd
     # Scribd::Document.find.
     
     def find_documents(options)
+      return nil unless @attributes[:session_key]
       Document.find options.merge(:scope => 'user', :session_key => @attributes[:session_key])
     end
     
@@ -92,6 +93,7 @@ module Scribd
     # belong to this user.
     
     def find_document(document_id)
+      return nil unless @attributes[:session_key]
       response = API.instance.send_request('docs.getSettings', { :doc_id => document_id, :session_key => @attributes[:session_key] })
       Document.new :xml => response.elements['/rsp'], :owner => self
     end
@@ -107,13 +109,12 @@ module Scribd
     # Scribd::Document.save method.
     
     def upload(options)
-     Document.create options.merge(:owner => self)
+      raise NotReadyError, "User hasn't been created yet" unless created?
+      Document.create options.merge(:owner => self)
     end
     
-    # Synonym for create.
-    
-    def self.signup(options={})
-      create options
+    class << self
+      alias_method :signup, :create
     end
     
     # Logs into Scribd using the given username and password. This user will be
