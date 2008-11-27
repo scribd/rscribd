@@ -1,3 +1,4 @@
+old_dir = Dir.getwd
 Dir.chdir(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'rscribd'
 
@@ -30,3 +31,5 @@ describe Array do
     [ [ 1, 2], [3, 4] ].to_hsh.should == { 1 => 2, 3 => 4 }
   end
 end
+
+Dir.chdir old_dir
