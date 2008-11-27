@@ -93,10 +93,10 @@ module Scribd
     # ignored.
     
     def read_attributes(attributes)
-      raise ArgumentError, "Attributes must be listed in an Enumeration" unless attributes.kind_of? Enumeration
+      raise ArgumentError, "Attributes must be listed in an Enumeration" unless attributes.kind_of?(Enumerable)
       raise ArgumentError, "All attributes must respond to to_sym" unless attributes.all? { |a| a.respond_to? :to_sym }
       keys = attributes.map(&:to_sym)
-      values = @attributes.values_at keys
+      values = @attributes.values_at(*keys)
       keys.zip(values).to_hsh
     end
     
