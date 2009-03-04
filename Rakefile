@@ -2,7 +2,7 @@ require 'rubygems'
 require 'hoe'
 require 'spec/rake/spectask'
 
-Hoe.new('rscribd', '1.0.0') do |p|
+Hoe.new('rscribd', '1.0.1') do |p|
   p.rubyforge_name = 'rscribd'
   p.author = 'Jared Friedman, Tim Morgan'
   p.email = 'api@scribd.com'

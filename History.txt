@@ -1,3 +1,8 @@
+=== 1.0.1 / 2009-3-4
+
+* Fixed a bug that would cause some API parameters to not be sent when uploading
+  a document.
+
 === 1.0.0 / 2008-11-26
 
 * First release version.
