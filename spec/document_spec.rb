@@ -212,6 +212,13 @@ describe Scribd::Document do
       @document.save
     end
     
+    it "should pass through any other attributes to the docs.upload call" do
+      @document.hello = 'there'
+      Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:hello => 'there'))
+      Scribd::API.instance.should_receive(:send_request).any_number_of_times
+      @document.save
+    end
+    
     describe "successfully" do
       before :each do
         @document.stub!(:id).and_return(3)

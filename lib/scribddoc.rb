@@ -99,16 +99,16 @@ module Scribd
       end
       
       # Make a request form
-      fields = Hash.new
+      fields = @attributes.dup
       if @attributes[:file] then
+        fields.delete :file
         ext = @attributes[:file].split('.').last unless @attributes[:file].index('.').nil?
-        fields[:doc_type] = @attributes[:type]
+        fields[:doc_type] = fields.delete(:type)
         fields[:doc_type] ||= ext
         fields[:doc_type].downcase! if fields[:doc_type]
-        fields[:rev_id] = @attributes[:doc_id]
-        fields[:access] = @attributes[:access]
+        fields[:rev_id] = fields.delete(:doc_id)
       end
-      fields[:session_key] = @attributes[:owner].session_key if @attributes[:owner]
+      fields[:session_key] = fields.delete(:owner).session_key if fields[:owner]
       response = nil
       
       if @attributes[:file] then
