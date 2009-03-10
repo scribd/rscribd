@@ -2,9 +2,8 @@
 # http://pivots.pivotallabs.com/users/damon/blog/articles/227-standup-04-27-07-testing-file-uploads
 
 require 'net/https'
-require "rubygems"
-require "mime/types" # Requires gem install mime-types
-require "base64"
+require 'rubygems'
+require 'mime/types' # Requires gem install mime-types
 require 'cgi'
 
 module Net #:nodoc:all

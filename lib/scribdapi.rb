@@ -1,5 +1,5 @@
 require 'singleton'
-require 'md5'
+require 'digest/md5'
 require 'rexml/document'
 
 module Scribd
@@ -203,7 +203,7 @@ module Scribd
     #   signature
     #
     def sign(args)
-      return MD5.md5(@secret + args.sort.flatten.join).to_s
+      return Digest::MD5.hexdigest(@secret + args.sort.flatten.join).to_s
     end
     
     # Outputs whatever is given into the $stderr if debugging is enabled.
