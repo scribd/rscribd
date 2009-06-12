@@ -100,9 +100,10 @@ module Scribd
       
       # Make a request form
       fields = @attributes.dup
-      if @attributes[:file] then
+      if (file=@attributes[:file]) then
         fields.delete :file
-        ext = @attributes[:file].split('.').last unless @attributes[:file].index('.').nil?
+        file_path = (is_file_object=file.is_a?(File)) ? file.path : file
+        ext = file_path.split('.').last unless is_file_object || file_path.index('.').nil?
         fields[:doc_type] = fields.delete(:type)
         fields[:doc_type] ||= ext
         fields[:doc_type].downcase! if fields[:doc_type]
@@ -122,10 +123,10 @@ module Scribd
           fields[:url] = @attributes[:file]
           response = API.instance.send_request 'docs.uploadFromUrl', fields
         elsif uri.kind_of? URI::Generic or uri.nil? then
-          File.open(@attributes[:file]) do |file|
-            fields[:file] = file
-            response = API.instance.send_request 'docs.upload', fields
-          end
+          file_obj = is_file_object ? file : File.open(file, 'r')
+          fields[:file] = file_obj
+          response = API.instance.send_request 'docs.upload', fields
+          file_obj.close unless is_file_object
         end
       end
       
