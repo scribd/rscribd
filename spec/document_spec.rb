@@ -148,135 +148,180 @@ describe Scribd::Document do
   end
   
   describe "to be uploaded" do
-    before :each do
-      @document = Scribd::Document.new(:file => 'sample/test.txt')
-    end
-    
-    describe "ignoring the changeSettings call" do
-    end
-    
-    it "should set the doc_type attribute to the file's extension" do
-      Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:doc_type => 'txt'))
-      Scribd::API.instance.should_receive(:send_request).any_number_of_times
-      @document.save
-    end
-    
-    it "should prefer a doc_type set in the type attribute" do
-      @document.type = 'pdf'
-      Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:doc_type => 'pdf'))
-      Scribd::API.instance.should_receive(:send_request).any_number_of_times
-      @document.save
-    end
-    
-    it "should not raise an exception if the document does not have an extension" do
-      @document.file = 'Rakefile'
-      Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:doc_type => nil))
-      Scribd::API.instance.should_receive(:send_request).any_number_of_times
-      lambda { @document.save }.should_not raise_error
-    end
-    
-    it "should downcase filename extensions" do
-      @document.file = 'sample/test.TXT'
-      Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:doc_type => 'txt'))
-      Scribd::API.instance.should_receive(:send_request).any_number_of_times
-      lambda { @document.save }.should_not raise_error
-    end
-    
-    it "should downcase attributed file extensions" do
-      @document.type = 'PDF'
-      Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:doc_type => 'pdf'))
-      Scribd::API.instance.should_receive(:send_request).any_number_of_times
-      @document.save
-    end
-    
-    it "should set the rev_id field to the doc_id attribute" do
-      @document.doc_id = 123
-      Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:rev_id => 123))
-      Scribd::API.instance.should_receive(:send_request).any_number_of_times
-      @document.save
-    end
-    
-    it "should set the access field to the access attribute" do
-      @document.access = 'private'
-      Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:access => 'private'))
-      Scribd::API.instance.should_receive(:send_request).any_number_of_times
-      @document.save
-    end
-    
-    it "should set the session_key field to the owner's session key" do
-      owner = mock('Scribd::User owner')
-      owner.stub!(:session_key).and_return('his key')
-      @document.owner = owner
-      Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:session_key => 'his key'))
-      Scribd::API.instance.should_receive(:send_request).any_number_of_times
-      @document.save
-    end
-    
-    it "should pass through any other attributes to the docs.upload call" do
-      @document.hello = 'there'
-      Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:hello => 'there'))
-      Scribd::API.instance.should_receive(:send_request).any_number_of_times
-      @document.save
-    end
-    
-    describe "successfully" do
+    describe "given a file path" do
       before :each do
-        @document.stub!(:id).and_return(3)
-        @xml = REXML::Document.new("<rsp stat='ok'><access_key>abc123</access_key></rsp>")
-        Scribd::API.instance.should_receive(:send_request).with('docs.upload', an_instance_of(Hash)).and_return(@xml)
+        @document = Scribd::Document.new(:file => 'sample/test.txt')
       end
-      
-      describe "without testing changeSettings" do
-        before :each do
-          Scribd::API.instance.should_receive(:send_request).with('docs.changeSettings', an_instance_of(Hash))
-        end
-        
-        it "should load attributes from the response" do
-          @document.save
-          @document.access_key.should eql('abc123')
-        end
 
-        it "should set created to true" do
-          @document.save
-          @document.should be_created
-        end
-        
-        it "should set saved to true" do
-          @document.save
-          @document.should be_saved
-        end
-        
-        it "should return true" do
-          @document.save.should be_true
-        end
+      it "should set the doc_type attribute to the file's extension" do
+        Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:doc_type => 'txt'))
+        Scribd::API.instance.should_receive(:send_request).any_number_of_times
+        @document.save
       end
-      
-      it "should not send the file, type, or access parameters to the changeSettings call" do
+
+      it "should prefer a doc_type set in the type attribute" do
         @document.type = 'pdf'
+        Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:doc_type => 'pdf'))
+        Scribd::API.instance.should_receive(:send_request).any_number_of_times
+        @document.save
+      end
+
+      it "should not raise an exception if the document does not have an extension" do
+        @document.file = 'Rakefile'
+        Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:doc_type => nil))
+        Scribd::API.instance.should_receive(:send_request).any_number_of_times
+        lambda { @document.save }.should_not raise_error
+      end
+
+      it "should downcase filename extensions" do
+        @document.file = 'sample/test.TXT'
+        Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:doc_type => 'txt'))
+        Scribd::API.instance.should_receive(:send_request).any_number_of_times
+        lambda { @document.save }.should_not raise_error
+      end
+
+      it "should downcase attributed file extensions" do
+        @document.type = 'PDF'
+        Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:doc_type => 'pdf'))
+        Scribd::API.instance.should_receive(:send_request).any_number_of_times
+        @document.save
+      end
+    end
+    
+    describe "given a file object" do
+      before :each do
+        @document = Scribd::Document.new(:file => File.new('sample/test.txt'))
+      end
+
+      it "should set the doc_type attribute to the file's extension" do
+        Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:doc_type => 'txt'))
+        Scribd::API.instance.should_receive(:send_request).any_number_of_times
+        @document.save
+      end
+
+      it "should prefer a doc_type set in the type attribute" do
+        @document.type = 'pdf'
+        Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:doc_type => 'pdf'))
+        Scribd::API.instance.should_receive(:send_request).any_number_of_times
+        @document.save
+      end
+
+      it "should not raise an exception if the document does not have an extension" do
+        @document.file = File.open('Rakefile')
+        Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:doc_type => nil))
+        Scribd::API.instance.should_receive(:send_request).any_number_of_times
+        lambda { @document.save }.should_not raise_error
+      end
+
+      it "should downcase filename extensions" do
+        @document.file = File.open('sample/test.TXT')
+        Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:doc_type => 'txt'))
+        Scribd::API.instance.should_receive(:send_request).any_number_of_times
+        lambda { @document.save }.should_not raise_error
+      end
+
+      it "should downcase attributed file extensions" do
+        @document.type = 'PDF'
+        Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:doc_type => 'pdf'))
+        Scribd::API.instance.should_receive(:send_request).any_number_of_times
+        @document.save
+      end
+    end
+    
+    describe "given a file to upload" do
+      before :each do
+        @document = Scribd::Document.new(:file => 'sample/test.txt')
+      end
+      
+      it "should set the rev_id field to the doc_id attribute" do
+        @document.doc_id = 123
+        Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:rev_id => 123))
+        Scribd::API.instance.should_receive(:send_request).any_number_of_times
+        @document.save
+      end
+
+      it "should set the access field to the access attribute" do
         @document.access = 'private'
-        Scribd::API.instance.should_not_receive(:send_request).with('docs.changeSettings', hash_including(:file => 'sample/text.txt'))
-        Scribd::API.instance.should_not_receive(:send_request).with('docs.changeSettings', hash_including(:type => 'pdf'))
-        Scribd::API.instance.should_not_receive(:send_request).with('docs.changeSettings', hash_including(:access => 'private'))
+        Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:access => 'private'))
+        Scribd::API.instance.should_receive(:send_request).any_number_of_times
         @document.save
       end
-      
-      it "should pass all other attributes to the changeSettings call" do
-        @document.attr1 = 'val1'
-        Scribd::API.instance.should_receive(:send_request).with('docs.changeSettings', hash_including(:attr1 => 'val1'))
-        @document.save
-      end
-      
-      it "should pass the owner's session key to changeSettings" do
+
+      it "should set the session_key field to the owner's session key" do
         owner = mock('Scribd::User owner')
         owner.stub!(:session_key).and_return('his key')
         @document.owner = owner
-        Scribd::API.instance.should_receive(:send_request).with('docs.changeSettings', hash_including(:session_key => 'his key'))
+        Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:session_key => 'his key'))
+        Scribd::API.instance.should_receive(:send_request).any_number_of_times
         @document.save
       end
-      
-      it "should pass the document's ID to changeSettings" do
-        Scribd::API.instance.should_receive(:send_request).with('docs.changeSettings', hash_including(:doc_ids => 3))
+
+      it "should pass through any other attributes to the docs.upload call" do
+        @document.hello = 'there'
+        Scribd::API.instance.should_receive(:send_request).with('docs.upload', hash_including(:hello => 'there'))
+        Scribd::API.instance.should_receive(:send_request).any_number_of_times
         @document.save
+      end
+
+      describe "successfully" do
+        before :each do
+          @document.stub!(:id).and_return(3)
+          @xml = REXML::Document.new("<rsp stat='ok'><access_key>abc123</access_key></rsp>")
+          Scribd::API.instance.should_receive(:send_request).with('docs.upload', an_instance_of(Hash)).and_return(@xml)
+        end
+
+        describe "without testing changeSettings" do
+          before :each do
+            Scribd::API.instance.should_receive(:send_request).with('docs.changeSettings', an_instance_of(Hash))
+          end
+
+          it "should load attributes from the response" do
+            @document.save
+            @document.access_key.should eql('abc123')
+          end
+
+          it "should set created to true" do
+            @document.save
+            @document.should be_created
+          end
+
+          it "should set saved to true" do
+            @document.save
+            @document.should be_saved
+          end
+
+          it "should return true" do
+            @document.save.should be_true
+          end
+        end
+
+        it "should not send the file, type, or access parameters to the changeSettings call" do
+          @document.type = 'pdf'
+          @document.access = 'private'
+          Scribd::API.instance.should_not_receive(:send_request).with('docs.changeSettings', hash_including(:file => 'sample/text.txt'))
+          Scribd::API.instance.should_not_receive(:send_request).with('docs.changeSettings', hash_including(:type => 'pdf'))
+          Scribd::API.instance.should_not_receive(:send_request).with('docs.changeSettings', hash_including(:access => 'private'))
+          @document.save
+        end
+
+        it "should pass all other attributes to the changeSettings call" do
+          @document.attr1 = 'val1'
+          Scribd::API.instance.should_receive(:send_request).with('docs.changeSettings', hash_including(:attr1 => 'val1'))
+          @document.save
+        end
+
+        it "should pass the owner's session key to changeSettings" do
+          owner = mock('Scribd::User owner')
+          owner.stub!(:session_key).and_return('his key')
+          @document.owner = owner
+          Scribd::API.instance.should_receive(:send_request).with('docs.changeSettings', hash_including(:session_key => 'his key'))
+          @document.save
+        end
+
+        it "should pass the document's ID to changeSettings" do
+          Scribd::API.instance.should_receive(:send_request).with('docs.changeSettings', hash_including(:doc_ids => 3))
+          @document.save
+        end
       end
     end
   end
