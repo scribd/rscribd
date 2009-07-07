@@ -100,10 +100,12 @@ module Scribd
       
       # Make a request form
       fields = @attributes.dup
-      if (file=@attributes[:file]) then
+      if file = @attributes[:file] then
         fields.delete :file
-        file_path = (is_file_object=file.is_a?(File)) ? file.path : file
-        ext = file_path.split('.').last unless is_file_object || file_path.index('.').nil?
+        is_file_object = file.is_a?(File)
+        file_path = is_file_object ? file.path : file
+        ext = File.extname(file_path).gsub(/^\./, '')
+        ext = nil if ext == ''
         fields[:doc_type] = fields.delete(:type)
         fields[:doc_type] ||= ext
         fields[:doc_type].downcase! if fields[:doc_type]
