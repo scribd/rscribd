@@ -2,7 +2,8 @@ require 'rubygems'
 require 'hoe'
 require 'spec/rake/spectask'
 
-Hoe.new('rscribd', '1.0.1') do |p|
+Hoe.spec('rscribd') do |p|
+  p.version = '1.0.1'
   p.rubyforge_name = 'rscribd'
   p.author = 'Jared Friedman, Tim Morgan'
   p.email = 'api@scribd.com'
@@ -14,11 +15,11 @@ Hoe.new('rscribd', '1.0.1') do |p|
   p.remote_rdoc_dir = ''
 end
 
-desc "Verify gem specs"
-Spec::Rake::SpecTask.new do |t|
-  t.spec_files = FileList['spec/**/*.rb']
-  t.spec_opts = [ '-cfs' ]
-end
+# desc "Verify gem specs"
+# Spec::Rake::SpecTask.new do |t|
+#   t.spec_files = FileList['spec/*.rb']
+#   t.spec_opts = [ '-cfs' ]
+# end
 
 namespace :github do
   desc "Prepare for GitHub gem packaging"
