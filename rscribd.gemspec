@@ -1,6 +1,3 @@
-(in /Users/tmorgan/Documents/Scribd/rscribd)
-# -*- encoding: utf-8 -*-
-
 Gem::Specification.new do |s|
   s.name = %q{rscribd}
   s.version = "1.0.2"
