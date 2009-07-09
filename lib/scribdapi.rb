@@ -70,6 +70,7 @@ module Scribd
       @asychronous = false
       @key = ENV['SCRIBD_API_KEY']
       @secret = ENV['SCRIBD_API_SECRET']
+      @user = User.new
     end
     
     def send_request(method, fields={}) #:nodoc:

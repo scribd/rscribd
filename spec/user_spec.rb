@@ -113,7 +113,7 @@ describe Scribd::User do
       end
     end
     
-    it "should have an upoad method that calls Document.create" do
+    it "should have an upload method that calls Document.create" do
       Scribd::Document.should_receive(:create).once.with(:file => 'test', :owner => @user)
       @user.upload(:file => 'test')
     end

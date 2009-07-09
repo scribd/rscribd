@@ -123,8 +123,8 @@ Content-Disposition: form-data; name=#{key.to_s.inspect}
     Scribd::API.instance.instance_variable_get(:@debug).should_not be_true
   end
   
-  it "should have no user by default" do
-    Scribd::API.instance.user.should be_nil
+  it "should have a user by default" do
+    Scribd::API.instance.user.should_not be_nil
   end
 end
 
