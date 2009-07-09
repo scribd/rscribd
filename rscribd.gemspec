@@ -6,13 +6,17 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Jared Friedman, Tim Morgan"]
-  s.date = %q{2009-7-9}
+  s.date = %q{2009-07-09}
   s.description = %q{This gem provides a simple and powerful library for the Scribd API, allowing you to write Ruby applications or Ruby on Rails websites that upload, convert, display, search, and control documents in many formats. For more information on the Scribd platform, visit http://www.scribd.com/publisher}
   s.email = %q{api@scribd.com}
-  s.extra_rdoc_files = ["History.txt", "Manifest.txt", "README.txt", "sample/test.txt"]
+  s.homepage = %q{http://github.com/scribd/rscribd}
+  
   s.files = ["History.txt", "Manifest.txt", "README.txt", "Rakefile", "lib/scribdapi.rb", "lib/scribddoc.rb", "lib/scribderrors.rb", "lib/scribdmultiparthack.rb", "lib/scribdresource.rb", "lib/rscribd.rb", "lib/scribduser.rb", "sample/01_upload.rb", "sample/02_user.rb", "sample/test.txt"]
+  
   s.has_rdoc = true
+  s.extra_rdoc_files = ["History.txt", "Manifest.txt", "README.txt"]
   s.rdoc_options = ["--main", "README.txt"]
+  
   s.require_paths = ["lib"]
   s.rubyforge_project = %q{rscribd}
   s.rubygems_version = %q{1.3.1}
