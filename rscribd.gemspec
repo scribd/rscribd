@@ -2,11 +2,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{rscribd}
-  s.version = "1.0.2"
+  s.version = "1.0.3"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Jared Friedman, Tim Morgan"]
-  s.date = %q{2009-07-09}
+  s.date = %q{2009-07-13}
   s.description = %q{This gem provides a simple and powerful library for the Scribd API, allowing you to write Ruby applications or Ruby on Rails websites that upload, convert, display, search, and control documents in many formats. For more information on the Scribd platform, visit http://www.scribd.com/publisher}
   s.email = %q{api@scribd.com}
   s.homepage = %q{http://github.com/scribd/rscribd}
