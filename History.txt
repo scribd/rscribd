@@ -1,3 +1,7 @@
+=== 1.0.3 / 2009-7-13
+
+* Removed unnecessary post parameters from API calls.
+
 === 1.0.2 / 2009-7-9
 
 * Added support for getting information about the API user when no other user

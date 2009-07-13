@@ -1,6 +1,6 @@
 = rscribd
 
-* 1.0.2 (July 9, 2009)
+* 1.0.3 (July 13, 2009)
 
 == DESCRIPTION:
 
