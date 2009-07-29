@@ -67,6 +67,16 @@ describe Scribd::User do
         Scribd::API.instance.should_receive(:send_request).once.with('docs.getList', { :session_key => 'some key' }).and_return(@xml)
         @user.documents
       end
+
+      it "should docs.getList with an offset" do
+        Scribd::API.instance.should_receive(:send_request).once.with('docs.getList', { :session_key => 'some key', :offset => 1 }).and_return(@xml)
+        @user.documents(:offset => 1)
+      end
+
+      it "should docs.getList with a limit" do
+        Scribd::API.instance.should_receive(:send_request).once.with('docs.getList', { :session_key => 'some key', :limit => 1 }).and_return(@xml)
+        @user.documents(:limit => 1)
+      end
       
       it "should return an array of received documents with the owner of each set to this user" do
         Scribd::API.instance.stub!(:send_request).and_return(@xml)

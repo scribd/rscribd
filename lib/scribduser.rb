@@ -56,7 +56,9 @@ module Scribd
       end
     end
     
-    # Returns a list of all documents owned by this user. This list is _not_
+    # Returns a list of documents owned by this user. By default, the size of the returned
+    # list is capped at 1000. Use the :limit and :offset parameters to page through this
+    # user's documents, however :limit cannot be greater than 1000. This list is _not_
     # backed by the server, so if you add or remove items from it, it will not
     # make those changes server-side. This also has some tricky consequences
     # when modifying a list of documents while iterating over it:
@@ -71,8 +73,8 @@ module Scribd
     # additional attributes are documented online at
     # http://www.scribd.com/publisher/api?method_name=docs.getSettings
     
-    def documents
-      response = API.instance.send_request('docs.getList', { :session_key => @attributes[:session_key] })
+    def documents(options = {})
+      response = API.instance.send_request('docs.getList', options.merge(:session_key => @attributes[:session_key]))
       documents = Array.new
       response.elements['/rsp/resultset'].elements.each do |doc|
         documents << Document.new(:xml => doc, :owner => self)
