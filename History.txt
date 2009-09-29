@@ -1,3 +1,8 @@
+=== 1.0.4 / 2009-7-24
+
+* Offset and limit parameters can now be used when fetching user documents.
+* Minor bug fixes.
+
 === 1.0.3 / 2009-7-13
 
 * Removed unnecessary post parameters from API calls.

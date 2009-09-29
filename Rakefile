@@ -3,7 +3,7 @@ require 'hoe'
 require 'spec/rake/spectask'
 
 Hoe.spec('rscribd') do |p|
-  p.version = '1.0.3'
+  p.version = '1.0.4'
   p.rubyforge_name = 'rscribd'
   p.author = 'Jared Friedman, Tim Morgan'
   p.email = 'api@scribd.com'
