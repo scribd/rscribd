@@ -91,15 +91,16 @@ module Scribd
     def save
       if not created? and @attributes[:file].nil? then
         raise "'file' attribute must be specified for new documents"
-        return false
       end
       
       if created? and @attributes[:file] and (@attributes[:owner].nil? or @attributes[:owner].session_key.nil?) then
         raise PrivilegeError, "The current API user is not the owner of this document"
       end
-      
+
       # Make a request form
+      response = nil
       fields = @attributes.dup
+      fields[:session_key] = fields.delete(:owner).session_key if fields[:owner]
       if file = @attributes[:file] then
         fields.delete :file
         is_file_object = file.is_a?(File)
@@ -110,12 +111,7 @@ module Scribd
         fields[:doc_type] ||= ext
         fields[:doc_type].downcase! if fields[:doc_type]
         fields[:rev_id] = fields.delete(:doc_id)
-      end
-      fields[:session_key] = fields.delete(:owner).session_key if fields[:owner]
-      response = nil
-      
-      if @attributes[:file] then
-        uri = nil
+
         begin
           uri = URI.parse @attributes[:file]
         rescue URI::InvalidURIError
@@ -207,7 +203,7 @@ module Scribd
     # this manner.
     
     def self.find(scope, options={})
-      doc_id = scope if scope.kind_of?(Integer)
+      doc_id = scope.kind_of?(Integer) ? scope : nil
       raise ArgumentError, "You must specify a query or document ID" unless options[:query] or doc_id
       
       if doc_id then

@@ -12,14 +12,14 @@ module Net #:nodoc:all
       boundary_token = [Array.new(8) {rand(256)}].join
       self.content_type = "multipart/form-data; boundary=#{boundary_token}"
       boundary_marker = "--#{boundary_token}\r\n"
-      self.body = param_hash.map { |param_name, param_value|
+      self.body = param_hash.map do |param_name, param_value|
         boundary_marker + case param_value
         when File
           file_to_multipart(param_name, param_value)
         else
           text_to_multipart(param_name, param_value.to_s)
         end
-      }.join('') + "--#{boundary_token}--\r\n"
+      end.join('') + "--#{boundary_token}--\r\n"
     end
 
     protected
