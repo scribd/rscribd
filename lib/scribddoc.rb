@@ -137,9 +137,9 @@ module Scribd
         @created = true
       end
       
+      fields.delete :access if fields[:file] # when uploading a doc, don't send access twice
       fields.delete :file
       fields.delete :type
-      fields.delete :access
       fields.delete :conversion_status
       
       changed_attributes = fields.dup # changed_attributes is what we will stick into @attributes once we update remotely
