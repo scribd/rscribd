@@ -461,7 +461,36 @@ describe Scribd::Document do
       @document.conversion_status.should eql('EXAMPLE')
     end
   end
-  
+
+  describe ".reads" do
+    before :each do
+      @document = Scribd::Document.new(:xml => REXML::Document.new("<doc_id type='integer'>123</doc_id>"))
+      @xml = REXML::Document.new("<rsp stat='ok'><reads>12321</reads></rsp>")
+    end
+
+    it "should call getStats with the correct doc_id" do
+      Scribd::API.instance.should_receive(:send_request).once.with('docs.getStats', :doc_id => 123).and_return(@xml)
+      @document.reads
+    end
+
+    it "should return the read count" do
+      Scribd::API.instance.stub!(:send_request).and_return(@xml)
+      @document.reads.should eql('12321')
+    end
+
+    it "should call getStats only once when read call made more than once" do
+      Scribd::API.instance.should_receive(:send_request).once.with('docs.getStats', :doc_id => 123).and_return(@xml)
+      @document.reads
+      @document.reads
+    end
+
+    it "should call getStats everytime when read call made with :force => true" do
+      Scribd::API.instance.should_receive(:send_request).twice.with('docs.getStats', :doc_id => 123).and_return(@xml)
+      @document.reads
+      @document.reads(:force => true)
+    end
+  end
+
   describe ".destroy" do
     before :each do
       @document = Scribd::Document.new(:xml => REXML::Document.new("<doc_id type='integer'>123</doc_id>"))

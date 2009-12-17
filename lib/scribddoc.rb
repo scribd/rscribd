@@ -243,7 +243,18 @@ module Scribd
       response = API.instance.send_request('docs.getConversionStatus', :doc_id => self.id)
       response.elements['/rsp/conversion_status'].text
     end
-    
+
+    # Returns the document read count. This is only retrieved from the server the first time it's queried.
+    # To force re-retrieval on subsequent calls include :force => true in the options parameter.
+
+    def reads(options = {})
+      if @reads.nil? || options[:force]
+        response = API.instance.send_request('docs.getStats', :doc_id => self.id)
+        @reads = response.elements['/rsp/reads'].text
+      end
+      @reads
+    end
+
     # Deletes a document. Returns true if successful.
     
     def destroy
