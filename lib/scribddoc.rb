@@ -121,7 +121,7 @@ module Scribd
           fields[:url] = @attributes[:file]
           response = API.instance.send_request 'docs.uploadFromUrl', fields
         elsif uri.kind_of? URI::Generic or uri.nil? then
-          file_obj = is_file_object ? file : File.open(file, 'r')
+          file_obj = is_file_object ? file : File.open(file, 'rb')
           fields[:file] = file_obj
           response = API.instance.send_request 'docs.upload', fields
           file_obj.close unless is_file_object
