@@ -18,7 +18,7 @@ module Scribd
   #  user = Scribd::API.instance.user
   #
   # For information on a user's attributes, please consult the online API
-  # documentation at http://www.scribd.com/publisher/api?method_name=user.login
+  # documentation at http://www.scribd.com/developers/api?method_name=user.login
   #
   # You can create a new account with the signup (a.k.a. create) method:
   #
@@ -71,7 +71,7 @@ module Scribd
     # Scribd::Document instances returned through this method have more
     # attributes than those returned by the Scribd::Document.find method. The
     # additional attributes are documented online at
-    # http://www.scribd.com/publisher/api?method_name=docs.getSettings
+    # http://www.scribd.com/developers/api?method_name=docs.getSettings
     
     def documents(options = {})
       response = API.instance.send_request('docs.getList', options.merge(:session_key => @attributes[:session_key]))
