@@ -1,5 +1,4 @@
 doc
-*.gemspec
 pkg
 .idea
 .DS_Store

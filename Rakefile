@@ -14,6 +14,7 @@ begin
     gemspec.add_dependency 'mime-types'
     gemspec.add_development_dependency "rspec"
   end
+  Jeweler::GemcutterTasks.new
 rescue LoadError
   puts "Jeweler not available. Install it with: gem install jeweler"
 end
