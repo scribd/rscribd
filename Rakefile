@@ -10,10 +10,15 @@ begin
     gemspec.email = "api@scribd.com"
     gemspec.homepage = "http://www.scribd.com/developers"
     gemspec.authors = [ "Tim Morgan", "Jared Friedman", "Mike Watts" ]
+    gemspec.rubyforge_project = "rscribd"
     
     gemspec.add_dependency 'mime-types'
     gemspec.add_development_dependency "rspec"
   end
+  Jeweler::RubyforgeTasks.new do |rubyforge|
+    rubyforge.doc_task = "rdoc"
+  end
+  Jeweler::GemcutterTasks.new
 rescue LoadError
   puts "Jeweler not available. Install it with: gem install jeweler"
 end

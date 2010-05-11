@@ -442,9 +442,45 @@ describe Scribd::Document do
       end
     end
   end
-  
+
+  describe ".featured" do
+    before :each do
+      @xml = REXML::Document.new("<rsp stat='ok'><result_set><result><access_key>abc123</access_key></result><result><access_key>abc321</access_key></result></result_set></rsp>")
+    end
+
+    it "should set the scope field according the options" do
+      Scribd::API.instance.should_receive(:send_request).with('docs.featured', hash_including(:scope => 'hot')).and_return(@xml)
+      Scribd::Document.featured(:all, :scope => 'hot', :limit => 10)
+    end
+
+    it "should return first result if :first is provided" do
+      Scribd::API.instance.should_receive(:send_request).with('docs.featured', {}).and_return(@xml)
+      docs = Scribd::Document.featured(:first)
+      docs.should be_kind_of(Scribd::Document)
+      docs.access_key.should eql('abc123')
+    end
+  end
+
+  describe ".browse" do
+    before :each do
+      @xml = REXML::Document.new("<rsp stat='ok'><result_set><result><access_key>abc123</access_key></result><result><access_key>abc321</access_key></result></result_set></rsp>")
+    end
+
+    it "should not pass the scope parameter in the options" do
+      Scribd::API.instance.should_receive(:send_request).with('docs.browse', hash_including(:sort => 'views', :category_id => 1, :limit => 10)).and_return(@xml)
+      Scribd::Document.browse(:all, :sort => 'views', :category_id => 1, :limit => 10)
+    end
+
+    it "should return first result if :first is provided" do
+      Scribd::API.instance.should_receive(:send_request).with('docs.browse', {}).and_return(@xml)
+      docs = Scribd::Document.browse(:first)
+      docs.should be_kind_of(Scribd::Document)
+      docs.access_key.should eql('abc123')
+    end
+  end
+
   it "should have an upload synonym for the create method"
-  
+
   describe ".conversion_status" do
     before :each do
       @document = Scribd::Document.new(:xml => REXML::Document.new("<doc_id type='integer'>123</doc_id>"))

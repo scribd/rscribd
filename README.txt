@@ -1,6 +1,6 @@
 = rscribd
 
-* 1.0.3 (July 13, 2009)
+* 1.1.0 (March 16, 2010)
 
 == DESCRIPTION:
 
@@ -25,7 +25,7 @@ storage system to store your documents in accessible manner. Scribd's ad system
 will help you monetize your documents easily.
 
 First, you'll need to get a Scribd API account. Visit
-http://www.scribd.com/publisher/api to apply for a platform account.
+http://www.scribd.com/developers/api to apply for a platform account.
 
 On the Platform site you will be given an API key and secret. The API object
 will need these to authenticate you:

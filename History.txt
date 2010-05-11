@@ -1,3 +1,11 @@
+=== 1.1.0 / 2010-3-16
+
+* Switched from Hoe to Jeweler.
+* Added support for docs.browse and docs.featured.
+* Added support for docs.getStats call to fetch document read count.
+* Fixed bug where access parameter wasn't sent in docs.changeSettings call.
+* Fixed Windows binary file upload issue.
+
 === 1.0.4 / 2009-7-24
 
 * Offset and limit parameters can now be used when fetching user documents.

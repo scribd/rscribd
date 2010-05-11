@@ -26,7 +26,7 @@ module Scribd
   # Aside from these two attributes, you can set other attributes that affect
   # how the file is displayed on Scribd. See the API documentation online for a
   # list of attributes, at
-  # http://www.scribd.com/publisher/api?method_name=docs.search (consult the
+  # http://www.scribd.com/developers/api?method_name=docs.search (consult the
   # "Result explanation" section).
   #
   # These attributes can be accessed or changed directly
@@ -177,7 +177,7 @@ module Scribd
     # their content. You must at a minimum supply a +query+ option, with a
     # string that will become the full-text search query. For a list of other
     # supported options, please see the online API documentation at
-    # http://www.scribd.com/publisher/api?method_name=docs.search
+    # http://www.scribd.com/developers/api?method_name=docs.search
     #
     # The scope can be any value given for the +scope+ parameter in the above
     # website, or <tt>:first</tt> to return the first result only (not an array
@@ -195,7 +195,7 @@ module Scribd
     #
     # Passing in simply a numerical ID loads the document with that ID. You can
     # pass additional options as defined at
-    # httphttp://www.scribd.com/publisher/api?method_name=docs.getSettings
+    # httphttp://www.scribd.com/developers/api?method_name=docs.getSettings
     #
     #  Scribd::Document.find(108196)
     #
@@ -222,11 +222,58 @@ module Scribd
         return scope == :first ? documents.first : documents
       end
     end
-    
+
+    # === Featured docs
+    #
+    # This method is called with a scope and a hash of options. For a list of
+    # supported options, please see the online API documentation at
+    # http://www.scribd.com/developers/api?method_name=docs.featured
+    #
+    # The scope can be either <tt>:first</tt> to return the first result only (not an array
+    # of results) or <tt>:all</tt> to return an array. Include a +scope+ option
+    # to control the parameter described in the API documentation.
+    #
+    #  Scribd::Document.featured(:all, :scope => 'hot', :limit => 10)
+    #
+    # Documents returned from this method will have their +owner+ attributes set
+    # to nil.
+
+    def self.featured(scope, options = {})
+      response = API.instance.send_request('docs.featured', options)
+      documents = []
+      response.elements['/rsp/result_set'].elements.each do |doc|
+        documents << Document.new(:xml => doc)
+      end
+      scope == :first ? documents.first : documents
+    end
+
+    # === Browse docs
+    #
+    # This method is called with a scope and a hash of options. For a list of
+    # supported options, please see the online API documentation at
+    # http://www.scribd.com/developers/api?method_name=docs.browse
+    #
+    # The scope can be either <tt>:first</tt> to return the first result only (not an array
+    # of results) or <tt>:all</tt> to return an array.
+    #
+    #  Scribd::Document.browse(:all, :sort => 'views', :category_id => 1, :limit => 10)
+    #
+    # Documents returned from this method will have their +owner+ attributes set
+    # to nil.
+
+    def self.browse(scope, options = {})
+      response = API.instance.send_request('docs.browse', options)
+      documents = []
+      response.elements['/rsp/result_set'].elements.each do |doc|
+        documents << Document.new(:xml => doc)
+      end
+      scope == :first ? documents.first : documents
+    end
+
     class << self
       alias_method :upload, :create
     end
-    
+
     # Returns the conversion status of this document. When a document is
     # uploaded it must be converted before it can be used. The conversion is
     # non-blocking; you can query this method to determine whether the document
@@ -234,7 +281,7 @@ module Scribd
     #
     # The conversion status is returned as a string. For a full list of
     # conversion statuses, see the online API documentation at
-    # http://www.scribd.com/publisher/api?method_name=docs.getConversionStatus
+    # http://www.scribd.com/developers/api?method_name=docs.getConversionStatus
     #
     # Unlike other properties of a document, this is retrieved from the server
     # every time it's queried.
@@ -277,7 +324,7 @@ module Scribd
     
     # Retrieves a document's download URL. You can provide a format for the
     # download. Valid formats are listed at
-    # http://www.scribd.com/publisher/api?method_name=docs.getDownloadUrl
+    # http://www.scribd.com/developers/api?method_name=docs.getDownloadUrl
     #
     # If you do not provide a format, the link will be for the document's
     # original format.
