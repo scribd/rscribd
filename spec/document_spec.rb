@@ -263,6 +263,13 @@ describe Scribd::Document do
         @document.save
       end
 
+      it "should not pass the thumbnail option to the docs.upload call" do
+        @document.thumbnail = 'sample/test.txt'
+        Scribd::API.instance.should_receive(:send_request).once.with('docs.upload', hash_not_including(:thumbnail))
+        Scribd::API.instance.should_receive(:send_request).any_number_of_times
+        @document.save
+      end
+
       describe "successfully" do
         before :each do
           @document.stub!(:id).and_return(3)
@@ -293,6 +300,49 @@ describe Scribd::Document do
           it "should return true" do
             @document.save.should be_true
           end
+
+          describe "with a path thumbnail" do
+            before :each do
+              @document.thumbnail = "sample/image.jpg"
+            end
+
+            it "should call docs.uploadThumb with a File object from the path" do
+              file_mock = mock('File (thumb)', :close => nil)
+              File.should_receive(:open).with(@document.thumbnail, 'rb').and_return(file_mock)
+              File.should_receive(:open).any_number_of_times.and_return(mock('File (content)', :close => nil))
+
+              Scribd::API.instance.should_receive(:send_request).once.with('docs.uploadThumb', :file => file_mock, :doc_id => 3)
+              Scribd::API.instance.should_receive(:send_request).any_number_of_times
+              
+              @document.save
+            end
+          end
+
+          describe "with a File thumbnail" do
+            before :each do
+              @document.thumbnail = File.open("sample/test.txt")
+            end
+
+            it "should call docs.uploadThumb with the File object" do
+              Scribd::API.instance.should_receive(:send_request).once.with('docs.uploadThumb', :file => @document.thumbnail, :doc_id => 3)
+              Scribd::API.instance.should_receive(:send_request).any_number_of_times
+              @document.save
+            end
+          end
+
+          describe "with a URL thumbnail" do
+            before :each do
+              @document.thumbnail = "http://www.scribd.com/favicon.ico"
+            end
+
+            it "should open a stream for the URL and pass it to docs.uploadThumb" do
+              stream_mock = mock('open-uri stream', :close => nil)
+              @document.should_receive(:open).once.with(an_instance_of(URI::HTTP)).and_return(stream_mock)
+              Scribd::API.instance.should_receive(:send_request).once.with('docs.uploadThumb', :file => stream_mock, :doc_id => 3)
+              Scribd::API.instance.should_receive(:send_request).any_number_of_times
+              @document.save
+            end
+          end
         end
 
         it "should not send the file, type, or access parameters to the changeSettings call" do
@@ -307,6 +357,13 @@ describe Scribd::Document do
         it "should pass all other attributes to the changeSettings call" do
           @document.attr1 = 'val1'
           Scribd::API.instance.should_receive(:send_request).with('docs.changeSettings', hash_including(:attr1 => 'val1'))
+          @document.save
+        end
+
+        it "should not pass thumbnail to the changeSettings call" do
+          @document.thumbnail = 'sample/test.txt'
+          Scribd::API.instance.should_receive(:send_request).with('docs.changeSettings', hash_not_including(:thumbnail))
+          Scribd::API.instance.should_receive(:send_request).any_number_of_times
           @document.save
         end
 

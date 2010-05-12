@@ -1,4 +1,5 @@
 require 'uri'
+require 'open-uri'
 
 module Scribd
   
@@ -87,6 +88,13 @@ module Scribd
     #
     # You must specify the +type+ attribute alongside the +file+ attribute if
     # the file's type cannot be determined from its name.
+    #
+    # Additional options outside of the API options:
+    #
+    # +thumbnail+:: Set this to the path to, a File object for, or the URL to a
+    #               custom thumbnail for your document. Thumbnail URLs are
+    #               downloaded to memory before being transmitted to the Scribd
+    #               API server.
     
     def save
       if not created? and @attributes[:file].nil? then
@@ -100,6 +108,7 @@ module Scribd
       # Make a request form
       response = nil
       fields = @attributes.dup
+      fields.delete :thumbnail
       fields[:session_key] = fields.delete(:owner).session_key if fields[:owner]
       if file = @attributes[:file] then
         fields.delete :file
@@ -135,6 +144,24 @@ module Scribd
         xml = response.get_elements('/rsp')[0]
         load_attributes(xml)
         @created = true
+      end
+
+      if thumb = fields.delete(:thumbnail) then
+        begin
+          uri = URI.parse(thumb)
+        rescue URI::InvalidURIError
+          uri = nil
+        end
+
+        file = nil
+        if uri.kind_of?(URI::HTTP) or uri.kind_of?(URI::HTTPS) or uri.kind_of?(URI::FTP) then
+          file = open(uri)
+        elsif uri.kind_of?(URI::Generic) or uri.nil? then
+          file = thumb.kind_of?(File) ? thumb : File.open(thumb, 'rb')
+        end
+
+        API.instance.send_request('docs.uploadThumb', :file => file, :doc_id => self.id)
+        file.close
       end
       
       fields.delete :access if fields[:file] # when uploading a doc, don't send access twice
@@ -195,7 +222,7 @@ module Scribd
     #
     # Passing in simply a numerical ID loads the document with that ID. You can
     # pass additional options as defined at
-    # httphttp://www.scribd.com/developers/api?method_name=docs.getSettings
+    # http://www.scribd.com/developers/api?method_name=docs.getSettings
     #
     #  Scribd::Document.find(108196)
     #
