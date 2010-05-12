@@ -6,7 +6,9 @@ require 'rubygems'
 require 'mime/types' # Requires gem install mime-types
 require 'cgi'
 
-module Net #:nodoc:all
+# @private
+module Net
+  # @private
   class HTTP::Post
     def multipart_params=(param_hash={})
       boundary_token = [Array.new(8) {rand(256)}].join

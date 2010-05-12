@@ -1,22 +1,22 @@
-= rscribd
+h1. rscribd
 
 * 1.1.0 (March 16, 2010)
 
-== DESCRIPTION:
+h2. DESCRIPTION:
 
 This gem provides a simple and powerful library for the Scribd API, allowing you
 to write Ruby applications or Ruby on Rails websites that upload, convert,
 display, search, and control documents in many formats. For more information on
-the Scribd platform, visit http://www.scribd.com/publisher
+the Scribd platform, visit the Developer web page on Scribd.
 
-== FEATURES:
+h2. FEATURES:
 
 * Upload your documents to Scribd's servers and access them using the gem
 * Upload local files or from remote web sites
 * Search, tag, and organize documents
 * Associate documents with your users' accounts
 
-== SYNOPSIS:
+h2. SYNOPSIS:
 
 This API allows you to use Scribd's Flash viewer on your website. You'll be able
 to take advantage of Scribd's scalable document conversion system to convert
@@ -24,41 +24,42 @@ your documents into platform-independent formats. You can leverage Scribd's
 storage system to store your documents in accessible manner. Scribd's ad system
 will help you monetize your documents easily.
 
-First, you'll need to get a Scribd API account. Visit
-http://www.scribd.com/developers/api to apply for a platform account.
+First, you'll need to get a Scribd API account. Visit Scribd to apply for a
+developer account.
 
 On the Platform site you will be given an API key and secret. The API object
 will need these to authenticate you:
 
-  require 'rscribd'
-  Scribd::API.instance.key = 'your API key'
-  Scribd::API.instance.secret = 'your API secret'
+<pre><code>
+require 'rscribd'
+Scribd::API.instance.key = 'your API key'
+Scribd::API.instance.secret = 'your API secret'
+</code></pre>
 
 Next, log into the Scribd website:
 
-  Scribd::User.login 'username', 'password'
+<pre><code>Scribd::User.login 'username', 'password'</code></pre>
 
 You are now ready to use Scribd to manage your documents. For instance, to
 upload a document:
 
-  doc = Scribd::Document.upload(:file => 'your-file.pdf')
+<pre><code>doc = Scribd::Document.upload(:file => 'your-file.pdf')</code></pre>
 
 For more information, please see the documentation for the Scribd::API,
 Scribd::User, and Scribd::Document classes. (You can also check out the docs for
 the other classes for a more in-depth look at this gem's features).
 
-== REQUIREMENTS:
+h2. REQUIREMENTS:
 
 * A Scribd API account
-* mime-types gem
+* Ruby 1.8 or newer, with RubyGems 1.3 or newer.
 
-== INSTALL:
+h2. INSTALL:
 
-* The client library is a RubyGem called *rscribd*. To install, type:
+* The client library is a RubyGem called *rscribd*. To install, type
+  @sudo gem install rscribd@.
 
-  sudo gem install rscribd
-
-== LICENSE:
+h2. LICENSE:
 
 (The MIT License)
 

@@ -6,74 +6,87 @@ module Scribd
   
   # This class acts as the top-level interface between Scribd and your
   # application. Before you can begin using the Scribd API, you must specify for
-  # this object your API key and API secret. They are available on your
-  # Platform home page.
+  # this object your API key and API secret. They are available on your account
+  # settings page.
   #
   # This class is a singleton. Its only instance is accessed using the
-  # +instance+ class method.
+  # @instance@ class method.
   #
   # To begin, first specify your API key and secret:
   #
-  #  Scribd::API.instance.key = 'your API key here'
-  #  Scribd::API.instance.secret = 'your API secret here'
+  # <pre><code>
+  # Scribd::API.instance.key = 'your API key here'
+  # Scribd::API.instance.secret = 'your API secret here'
+  # </code></pre>
   #
-  # (If you set the +SCRIBD_API_KEY+ and +SCRIBD_API_SECRET+ Ruby environment
+  # (If you set the @SCRIBD_API_KEY@ and @SCRIBD_API_SECRET@ Ruby environment
   # variables before loading the gem, these values will be set automatically for
   # you.)
   #
   # Next, you should log in to Scribd, or create a new account through the gem.
   #
-  #  user = Scribd::User.login 'login', 'password'
+  # <pre><code>user = Scribd::User.login 'login', 'password'</code></pre>
   #
-  # You are now free to use the Scribd::User or Scribd::Document classes to work
-  # with Scribd documents or your user account.
+  # You are now free to use the {Scribd::User} or {Scribd::Document} classes to
+  # work with Scribd documents or your user account.
   #
-  # If you need the Scribd::User instance for the currently logged in user at a
-  # later point in time, you can retrieve it using the +user+ attribute:
+  # If you need the {User} instance for the currently logged in user at a later
+  # point in time, you can retrieve it using the @user@ attribute:
   #
-  #  user = Scribd::API.instance.user
+  # <pre><code>user = Scribd::API.instance.user</code></pre>
   #
   # In addition, you can save and restore sessions by simply storing this user
   # instance and assigning it to the API at a later time. For example, to
   # restore the session retrieved in the previous example:
   #
-  #  Scribd::API.instance.user = user
+  # <pre><code>Scribd::API.instance.user = user</code></pre>
   #
   # In addition to working with Scribd users, you can also work with your own
   # website's user accounts. To do this, set the Scribd API user to a string
   # containing a unique identifier for that user (perhaps a login name or a user
   # ID):
   #
-  #  Scribd::API.instance.user = my_user_object.mangled_user_id
+  # <pre><code>Scribd::API.instance.user = my_user_object.mangled_user_id</code></pre>
   #
-  # A "phantom" Scribd user will be set up with that ID, so you any documents
-  # you upload will be associated with that account.
+  # A "phantom" Scribd user will be set up with that ID, so any documents you
+  # upload will be associated with that account.
   #
   # For more hints on what you can do with the Scribd API, please see the
-  # Scribd::Document class.
+  # {Document} class.
   
   class API
     include Singleton
-    
-    HOST = 'api.scribd.com' #:nodoc:
-    PORT = 80 #:nodoc:
-    REQUEST_PATH = '/api' #:nodoc:
-    TRIES = 3 #:nodoc:
-    
-    attr_accessor :key # The API key you were given when you created a Platform account.
-    attr_accessor :secret # The API secret used to validate your key (also provided with your account).
-    attr_accessor :user # The currently logged in user.
-    attr_accessor :asynchronous # If true, requests are processed asynchronously. If false, requests are blocking.
-    attr_accessor :debug # If true, extended debugging information is printed
-    
-    def initialize #:nodoc:
+
+    # @private
+    HOST = 'api.scribd.com'
+    # @private
+    PORT = 80
+    # @private
+    REQUEST_PATH = '/api'
+    # @private
+    TRIES = 3
+
+    # @return [String] The API key you were given when you created a Platform account.
+    attr_accessor :key
+    # @return [String] The API secret used to validate your key (also provided with your account).
+    attr_accessor :secret
+    # @return [Scribd::User] The currently logged in user.
+    attr_accessor :user
+    # @return [true, false] If true, requests are processed asynchronously. If false, requests are blocking.
+    attr_accessor :asynchronous
+    # @return [true, false] If true, extended debugging information is printed
+    attr_accessor :debug
+
+    # @private
+    def initialize
       @asychronous = false
       @key = ENV['SCRIBD_API_KEY']
       @secret = ENV['SCRIBD_API_SECRET']
       @user = User.new
     end
-    
-    def send_request(method, fields={}) #:nodoc:
+
+    # @private
+    def send_request(method, fields={})
       raise NotReadyError unless @key and @secret
       # See if method is given
       raise ArgumentError, "Method should be given" if method.nil? || method.empty?
@@ -161,7 +174,7 @@ module Scribd
     # TODO: It would probably be better if we wrapped the fault
     # in something more meaningful. At the very least, a broad
     # division of errors, such as retryable and fatal. 
-    def error(el) #:nodoc:
+    def error(el)
       att = el.attributes
       fe = XMLRPC::FaultException.new(att['code'].to_i, att['msg'])
       $stderr.puts "ERR: #{fe.faultString} (#{fe.faultCode})"
@@ -177,7 +190,7 @@ module Scribd
     # Raises:
     #   ArgumentError if the value is nil, or empty.
     #
-    def check_not_empty(name, value) #:nodoc:
+    def check_not_empty(name, value)
       check_given(name, value)
       raise ArgumentError, "#{name} must not be empty" if value.to_s.empty?
     end
@@ -191,7 +204,7 @@ module Scribd
     # Raises:
     #   ArgumentError if the value is nil.
     #
-    def check_given(name, value) #:nodoc:
+    def check_given(name, value)
       raise ArgumentError, "#{name} must be given" if value.nil?
     end
     

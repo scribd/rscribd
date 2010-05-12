@@ -4,54 +4,67 @@ require 'open-uri'
 module Scribd
   
   # A document as shown on the Scribd website. API programs can upload documents
-  # from files or URL's, tag them, and change their settings. An API program can
+  # from files or URLs, tag them, and change their settings. An API program can
   # access any document, but it can only modify documents owned by the logged-in
   # user.
   #
-  # To upload a new document to Scribd, you must create a new Document instance,
-  # set the +file+ attribute to the file's path, and then save the document:
+  # To upload a new document to Scribd, you must create a new {Document}
+  # instance, set the @file@ attribute to the file's path, and then save the
+  # document:
   #
-  #  doc = Scribd::Document.new
-  #  doc.file = '/path/or/URL/of/file.txt'
-  #  doc.save
+  # <pre><code>
+  # doc = Scribd::Document.new
+  # doc.file = '/path/or/URL/of/file.txt'
+  # doc.save
+  # </code></pre>
   #
   # You can do this more simply with one line of code:
   #
-  #  doc = Scribd::Document.create :file => '/path/or/URL/of/file.txt'
+  # <pre><code>doc = Scribd::Document.create :file => '/path/or/URL/of/file.txt'</code></pre>
   #
   # If you are uploading a file that does not have an extension (like ".txt"),
-  # you need to specify the +type+ attribute as well:
+  # you need to specify the @type@ attribute as well:
   #
-  #  doc = Scribd::Document.upload :file => 'CHANGELOG', :type => 'txt'
+  # <pre><code>doc = Scribd::Document.upload :file => 'CHANGELOG', :type => 'txt'</code></pre>
   #
   # Aside from these two attributes, you can set other attributes that affect
   # how the file is displayed on Scribd. See the API documentation online for a
-  # list of attributes, at
-  # http://www.scribd.com/developers/api?method_name=docs.search (consult the
-  # "Result explanation" section).
+  # list of attributes.
   #
   # These attributes can be accessed or changed directly
-  # (<tt>doc.title = 'Title'</tt>). You must save a document after changing its
+  # (@doc.title = 'Title'@). You must save a document after changing its
   # attributes in order for those changes to take effect. Not all attributes can
   # be modified; see the API documentation online for details.
   #
-  # A document can be associated with a Scribd::User via the +owner+ attribute.
-  # This is not always the case, however. Documents retrieved from the find
-  # method will not be associated with their owners.
+  # A document can be associated with a Scribd::User via the @owner@ attribute.
+  # This is not always the case, however. {Document Documents} retrieved from
+  # the {.find} method will not be associated with their owners.
   #
-  # The +owner+ attribute is read/write, however, changes made to it only apply
+  # The @owner@ attribute is read/write, however, changes made to it only apply
   # _before_ the document is saved. Once it is saved, the owner is set in stone
   # and cannot be modified:
   #
-  #  doc = Scribd::Document.new :file => 'test.txt'
-  #  doc.user = Scribd::User.signup(:username => 'newuser', :password => 'newpass', :email => 'your@email.com')
-  #  doc.save #=> Uploads the document as "newuser", regardless of who the Scribd API user is
-  #  doc.user = Scribd::API.instance.user #=> raises NotImplementedError 
+  # <pre><code>
+  # doc = Scribd::Document.new :file => 'test.txt'
+  # doc.user = Scribd::User.signup(:username => 'newuser', :password => 'newpass', :email => 'your@email.com')
+  # doc.save #=> Uploads the document as "newuser", regardless of who the Scribd API user is
+  # doc.user = Scribd::API.instance.user #=> raises NotImplementedError
+  #</code></pre>
+  #
+  # h2. Special attributes
+  #
+  # Normally any attributes other than @file@ and @type@ are sent to and dealt
+  # by the API; however, there are a few attributes you can set on an instance
+  # that have special meaning:
+  #
+  # | @thumbnail@ | Set this to the path to, a @File@ object for, or the URL string for an image file you want to act as the document's thumbnail. Note that for URLs, the thumbnail will be downloaded to memory before being transmitted to the Scribd API server. |
   
   class Document < Resource
     
     # Creates a new, unsaved document with the given attributes. The document
     # must be saved before it will appear on the website.
+    #
+    # @param [Hash] options The document's attributes.
     
     def initialize(options={})
       super
@@ -71,30 +84,24 @@ module Scribd
     # changed attributes and saves it. Returns true if the save completed
     # successfully. Throws an exception if save fails.
     #
-    # For first-time saves, you must have specified a +file+ attribute. This can
+    # For first-time saves, you must have specified a @file@ attribute. This can
     # either be a local path to a file, or an HTTP, HTTPS, or FTP URL. In either
     # case, the file at that location will be uploaded to create the document.
     #
-    # If you create a document, specify the +file+ attribute again, and then
+    # If you create a document, specify the @file@ attribute again, and then
     # save it, Scribd replaces the existing document with the file given, while
     # keeping all other properties (title, description, etc.) the same, in a
     # process called _revisioning_.
     #
-    # This method can throw a +Timeout+ exception if the connection is slow or
-    # inaccessible. A Scribd::ResponseError will be thrown if a remote problem
-    # occurs. A Scribd::PrivilegeError will be thrown if you try to upload a new
-    # revision for a document with no associated user (i.e., one retrieved from
-    # the find method).
-    #
-    # You must specify the +type+ attribute alongside the +file+ attribute if
+    # You must specify the @type@ attribute alongside the @file@ attribute if
     # the file's type cannot be determined from its name.
     #
-    # Additional options outside of the API options:
-    #
-    # +thumbnail+:: Set this to the path to, a File object for, or the URL to a
-    #               custom thumbnail for your document. Thumbnail URLs are
-    #               downloaded to memory before being transmitted to the Scribd
-    #               API server.
+    # @raise [Timeout] If the connection is slow or inaccessible.
+    # @raise [Scribd::ResponseError] If a remote problem occurs.
+    # @raise [Scribd::PrivilegeError] If you try to upload a new revision for a
+    # document with no associated user (i.e., one retrieved from the {.find}
+    # method).
+    # @return [true, false] Whether or not the upload was successful.
     
     def save
       if not created? and @attributes[:file].nil? then
@@ -187,6 +194,13 @@ module Scribd
     
     # Quickly updates an array of documents with the given attributes. The
     # documents can have different owners, but all of them must be modifiable.
+    #
+    # @param [Array<Scribd::Document>] docs An array of documents to update.
+    # @param [Hash] options The attributes to assign to all of those documents.
+    # @raise [ArgumentError] If an invalid value for @docs@ is given.
+    # @raise [ArgumentError] If an invalid value for @options@ is given.
+    # @raise [ArgumentError] If one or more documents cannot be modified because
+    # it has no owner (e.g., it was retrieved from a call to {.find}).
     
     def self.update_all(docs, options)
       raise ArgumentError, "docs must be an array" unless docs.kind_of? Array
@@ -197,37 +211,45 @@ module Scribd
       docs_by_user = docs.inject(Hash.new { |hash, key| hash[key] = Array.new }) { |hash, doc| hash[doc.owner] << doc; hash }
       docs_by_user.each { |user, doc_list| API.instance.send_request 'docs.changeSettings', options.merge(:doc_ids => doc_list.collect(&:id).join(','), :session_key => user.session_key) }
     end
-    
-    # === Finding by query
+
+    # @overload find(scope, options={})
+    #   This method is called with a scope and a hash of options to documents by
+    #   their content. You must at a minimum supply a @query@ option, with a
+    #   string that will become the full-text search query. For a list of other
+    #   supported options, please see the online API documentation.
     #
-    # This method is called with a scope and a hash of options to documents by
-    # their content. You must at a minimum supply a +query+ option, with a
-    # string that will become the full-text search query. For a list of other
-    # supported options, please see the online API documentation at
-    # http://www.scribd.com/developers/api?method_name=docs.search
+    #   The scope can be any value given for the @scope@ parameter in the above
+    #   website, or @:first@ to return the first result only (not an array of
+    #   results).
     #
-    # The scope can be any value given for the +scope+ parameter in the above
-    # website, or <tt>:first</tt> to return the first result only (not an array
-    # of results).
+    #   Documents retrieved by this method have no {User} stored in their
+    #   @owner@ attribute; in other words, they cannot be modified.
     #
-    # The +num_results+ option has been aliased as +limit+, and the +num_start+
-    # option has been aliased as +offset+.
+    #   @param [Symbol] scope The scope in which to do the search.
+    #   @param [Hash] options Options for the search.
+    #   @option options [String] :query The search query (required).
+    #   @option options [Fixnum] :limit An alias for the @num_results@ option.
+    #   @option options [Fixnum] :offset An alias for the @num_start@ option.
+    #   @return [Array<Scribd::Document>] An array of documents found.
+    #   @example
+    #     Scribd::Document.find(:all, :query => 'cats and dogs', :limit => 10)
     #
-    # Documents returned from this method will have their +owner+ attributes set
-    # to nil.
+    # @overload find(id, options={})
+    #   Passing in simply a numerical ID loads the document with that ID. You
+    #   can pass additional options as defined in the API documentation.
     #
-    #  Scribd::Document.find(:all, :query => 'cats and dogs', :limit => 10)
+    #   For now only documents that belong to the current user can be accessed
+    #   in this manner.
     #
-    # === Finding by ID
+    #   @param [Fixnum] id The Scribd ID of the document to locate.
+    #   @param [Hash] options Options to pass to the API find method.
+    #   @return [Scribd::Document] The document found.
+    #   @return [nil] If nothing was found.
+    #   @example
+    #     Scribd::Document.find(108196)
     #
-    # Passing in simply a numerical ID loads the document with that ID. You can
-    # pass additional options as defined at
-    # http://www.scribd.com/developers/api?method_name=docs.getSettings
-    #
-    #  Scribd::Document.find(108196)
-    #
-    # For now only documents that belong to the current user can be accessed in
-    # this manner.
+    # @raise [ArgumentError] If neither of the two correct argument forms is
+    # provided.
     
     def self.find(scope, options={})
       doc_id = scope.kind_of?(Integer) ? scope : nil
@@ -250,20 +272,25 @@ module Scribd
       end
     end
 
-    # === Featured docs
+    # Returns featured documents found in a given scope and with given options.
     #
     # This method is called with a scope and a hash of options. For a list of
-    # supported options, please see the online API documentation at
-    # http://www.scribd.com/developers/api?method_name=docs.featured
+    # supported options, please see the online API documentation.
     #
-    # The scope can be either <tt>:first</tt> to return the first result only (not an array
-    # of results) or <tt>:all</tt> to return an array. Include a +scope+ option
-    # to control the parameter described in the API documentation.
+    # The scope can be either @:first@ to return the first result only (not an
+    # array of results) or @:all@ to return an array.
     #
-    #  Scribd::Document.featured(:all, :scope => 'hot', :limit => 10)
+    # Documents returned from this method will have their @owner@ attributes set
+    # to @nil@ (i.e., they are read-only).
     #
-    # Documents returned from this method will have their +owner+ attributes set
-    # to nil.
+    # @param [Symbol] scope The scope in which to do the search.
+    # @param [Hash] options Options to pass to the API find method.
+    # @return [Scribd::Document] A single document if the scope was @:first@.
+    # @return [nil] If the scope was @:first@ and no document was found.
+    # @return [Array<Scribd::Document>] An array of documents if the scope was
+    # @:all@.
+    # @example
+    #   Scribd::Document.featured(:all, :scope => 'hot', :limit => 10)
 
     def self.featured(scope, options = {})
       response = API.instance.send_request('docs.featured', options)
@@ -274,19 +301,26 @@ module Scribd
       scope == :first ? documents.first : documents
     end
 
-    # === Browse docs
+    # Returns documents found by the Scribd browser in a given scope and with
+    # given options. The browser provides documents suitable for a browse page.
     #
     # This method is called with a scope and a hash of options. For a list of
-    # supported options, please see the online API documentation at
-    # http://www.scribd.com/developers/api?method_name=docs.browse
+    # supported options, please see the online API documentation.
     #
-    # The scope can be either <tt>:first</tt> to return the first result only (not an array
-    # of results) or <tt>:all</tt> to return an array.
+    # The scope can be either @:first@ to return the first result only (not an
+    # array of results) or @:all@ to return an array.
     #
-    #  Scribd::Document.browse(:all, :sort => 'views', :category_id => 1, :limit => 10)
+    # Documents returned from this method will have their @owner@ attributes set
+    # to @nil@ (i.e., they are read-only).
     #
-    # Documents returned from this method will have their +owner+ attributes set
-    # to nil.
+    # @param [Symbol] scope The scope in which to do the search.
+    # @param [Hash] options Options to pass to the API find method.
+    # @return [Scribd::Document] A single document if the scope was @:first@.
+    # @return [nil] If the scope was @:first@ and no document was found.
+    # @return [Array<Scribd::Document>] An array of documents if the scope was
+    # @:all@.
+    # @example
+    #   Scribd::Document.browse(:all, :sort => 'views', :category_id => 1, :limit => 10)
 
     def self.browse(scope, options = {})
       response = API.instance.send_request('docs.browse', options)
@@ -306,20 +340,25 @@ module Scribd
     # non-blocking; you can query this method to determine whether the document
     # is ready to be displayed.
     #
-    # The conversion status is returned as a string. For a full list of
-    # conversion statuses, see the online API documentation at
-    # http://www.scribd.com/developers/api?method_name=docs.getConversionStatus
+    # For a full list of conversion statuses, see the online API documentation.
     #
     # Unlike other properties of a document, this is retrieved from the server
     # every time it's queried.
+    #
+    # @return [String] The document's conversion status.
     
     def conversion_status
       response = API.instance.send_request('docs.getConversionStatus', :doc_id => self.id)
       response.elements['/rsp/conversion_status'].text
     end
 
-    # Returns the document read count. This is only retrieved from the server the first time it's queried.
-    # To force re-retrieval on subsequent calls include :force => true in the options parameter.
+    # Returns the document read count. This is only retrieved from the API
+    # server the first time it's queried unless @force@ is set to @true@.
+    #
+    # @param [Hash] options A hash of options.
+    # @option options [true, false] :force If true, clears the local cache for
+    # this value and re-retrieves it from the API server.
+    # @return [String] The number of reads this document has received.
 
     def reads(options = {})
       if @reads.nil? || options[:force]
@@ -329,32 +368,36 @@ module Scribd
       @reads
     end
 
-    # Deletes a document. Returns true if successful.
+    # Deletes a document.
+    #
+    # @return [true, false] Whether or not the document was successfully
+    # deleted.
     
     def destroy
       response = API.instance.send_request('docs.delete', :doc_id => self.id)
       return response.elements['/rsp'].attributes['stat'] == 'ok'
     end
     
-    # Returns the +doc_id+ attribute.
+    # An alias for the @doc_id@ attribute.
     
     def id
       self.doc_id
     end
-    
-    # Ensures that the +owner+ attribute cannot be set once the document is
-    # saved.
-    
-    def owner=(newuser) #:nodoc:
+
+    # @private
+    def owner=(newuser)
+      # don't allow them to set the owner if the document is saved
       saved? ? raise(NotImplementedError, "Cannot change a document's owner once the document has been saved") : super
     end
     
     # Retrieves a document's download URL. You can provide a format for the
-    # download. Valid formats are listed at
-    # http://www.scribd.com/developers/api?method_name=docs.getDownloadUrl
+    # download. Valid formats are listed in the online API documentation.
     #
     # If you do not provide a format, the link will be for the document's
     # original format.
+    #
+    # @param [String] format The download format.
+    # @return [String] The download URL.
     
     def download_url(format='original')
       @download_urls[format] ||= begin

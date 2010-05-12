@@ -6,28 +6,30 @@ module Scribd
   #
   # An API program begins by logging into Scribd:
   #
-  #  user = Scribd::User.login 'login', 'pass'
+  # <pre><code>user = Scribd::User.login 'login', 'pass'</code></pre>
   #
   # You can now access information about this user through direct method calls:
   #
-  #  user.name #=> 'Real Name'
+  # <pre><code>user.name #=> 'Real Name'</code></pre>
   #
-  # If, at any time, you would like to retrieve the Scribd::User instance for
-  # the currently logged-in user, simply call:
+  # If, at any time, you would like to retrieve the {User} instance for the
+  # currently logged-in user, simply call:
   #
-  #  user = Scribd::API.instance.user
+  # <pre><code>user = Scribd::API.instance.user</code></pre>
   #
   # For information on a user's attributes, please consult the online API
-  # documentation at http://www.scribd.com/developers/api?method_name=user.login
+  # documentation.
   #
-  # You can create a new account with the signup (a.k.a. create) method:
+  # You can create a new account with the {.signup} (a.k.a. {.create}) method:
   #
-  #  user = Scribd::User.signup :username => 'testuser', :password => 'testpassword', :email => your@email.com
+  # <pre><code>user = Scribd::User.signup :username => 'testuser', :password => 'testpassword', :email => your@email.com</code></pre>
   
   class User < Resource
     
     # Creates a new, unsaved user with the given attributes. You can eventually
     # use this record to create a new Scribd account.
+    #
+    # @param [Hash] options The initial attributes for the user.
     
     def initialize(options={})
       super
@@ -42,8 +44,9 @@ module Scribd
     
     # For new, unsaved records, creates a new Scribd user with the provided
     # attributes, then logs in as that user. Currently modification of existing
-    # Scribd users is not supported. Throws a ResponseError if a remote error
-    # occurs.
+    # Scribd users is not supported.
+    #
+    # @raise [ResponseError] If a remote error occurs.
     
     def save
       if not created? then
@@ -56,22 +59,28 @@ module Scribd
       end
     end
     
-    # Returns a list of documents owned by this user. By default, the size of the returned
-    # list is capped at 1000. Use the :limit and :offset parameters to page through this
-    # user's documents, however :limit cannot be greater than 1000. This list is _not_
-    # backed by the server, so if you add or remove items from it, it will not
-    # make those changes server-side. This also has some tricky consequences
-    # when modifying a list of documents while iterating over it:
+    # Returns a list of documents owned by this user. By default, the size of
+    # the returned list is capped at 1,000. Use the @:limit@ and @:offset@
+    # parameters to page through this user's documents; however, @:limit@ cannot
+    # be greater than 1,000. This list is _not_ backed by the server, so if you
+    # add or remove items from it, it will not make those changes server-side.
+    # This also has some tricky consequences when modifying a list of documents
+    # while iterating over it:
     #
-    #  docs = user.documents
-    #  docs.each(&:destroy)
-    #  docs #=> Still populated, because it hasn't been updated
-    #  docs = user.documents #=> Now it's empty
+    # <pre><code>
+    # docs = user.documents
+    # docs.each(&:destroy)
+    # docs #=> Still populated, because it hasn't been updated
+    # docs = user.documents #=> Now it's empty
+    # </code></pre>
     #
-    # Scribd::Document instances returned through this method have more
-    # attributes than those returned by the Scribd::Document.find method. The
-    # additional attributes are documented online at
-    # http://www.scribd.com/developers/api?method_name=docs.getSettings
+    # {Scribd::Document} instances returned through this method have more
+    # attributes than those returned by the {Scribd::Document.find} method. The
+    # additional attributes are documented online.
+    #
+    # @param [Hash] options Options to provide to the API find method.
+    # @return [Array<Scribd::Document>] The found documents.
+    # @see #find_documents
     
     def documents(options = {})
       response = API.instance.send_request('docs.getList', options.merge(:session_key => @attributes[:session_key]))
@@ -83,16 +92,22 @@ module Scribd
     end
     
     # Finds documents owned by this user matching a given query. The parameters
-    # provided to this method are identical to those provided to
-    # Scribd::Document.find.
-    
-    def find_documents(options)
+    # provided to this method are identical to those provided to {.find}.
+    #
+    # @param [Hash] options Options to pass to the API find method.
+    # @see #documents
+
+    def find_documents(options={})
       return nil unless @attributes[:session_key]
       Document.find options.merge(:scope => 'user', :session_key => @attributes[:session_key])
     end
     
-    # Loads a Scribd::Document by ID. You can only load such documents if they 
-    # belong to this user.
+    # Loads a {Document} by ID. You can only load such documents if they belong
+    # to this user.
+    #
+    # @param [Fixnum] document_id The Scribd document ID.
+    # @return [Scribd::Document] The found document.
+    # @return [nil] If nothing was found.
     
     def find_document(document_id)
       return nil unless @attributes[:session_key]
@@ -100,15 +115,11 @@ module Scribd
       Document.new :xml => response.elements['/rsp'], :owner => self
     end
     
-    # Uploads a document to a user's document list. This method takes the
-    # following options:
+    # Uploads a document to a user's document list. See the
+    # {Scribd::Document#save} method for more information on the options hash.
     #
-    # +file+:: The location of a file on disk or the URL to a file on the Web
-    # +type+:: The file's type (e.g., "txt" or "ppt"). Optional if the file has
-    #          an extension (like "file.txt").
-    #
-    # There are other options you can specify. For more information, see the
-    # Scribd::Document.save method.
+    # @param [Hash] options Options to pass to the API upload method.
+    # @raise [NotReadyError] If the user is unsaved.
     
     def upload(options)
       raise NotReadyError, "User hasn't been created yet" unless created?
@@ -121,8 +132,11 @@ module Scribd
     
     # Logs into Scribd using the given username and password. This user will be
     # used for all subsequent Scribd API calls. You must log in before you can
-    # use protected API functions. Returns the Scribd::User instance for the
-    # logged in user.
+    # use protected API functions.
+    #
+    # @param [String] username The Scribd user's login.
+    # @param [String] password The Scribd user's password.
+    # @return [Scribd::User] The logged-in user.
     
     def self.login(username, password)
       response = API.instance.send_request('user.login', { :username => username, :password => password })
@@ -132,13 +146,14 @@ module Scribd
       return user
     end
     
-    # Returns the +user_id+ attribute.
+    # @return [String] The @user_id@ attribute.
     
     def id
       self.user_id
     end
-    
-    def to_s #:nodoc:
+
+    # @private
+    def to_s
       @attributes[:username]
     end
   end

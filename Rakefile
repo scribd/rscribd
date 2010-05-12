@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'spec/rake/spectask'
+require 'yard'
 
 begin
   require 'jeweler'
@@ -27,4 +28,15 @@ desc "Verify gem specs"
 Spec::Rake::SpecTask.new do |t|
   t.spec_files = FileList['spec/*.rb']
   t.spec_opts = [ '-cfs' ]
+end
+
+desc 'Generate YARD documentation.'
+YARD::Rake::YardocTask.new(:doc) do |rdoc|
+  rdoc.options << '-o' << 'doc'
+  rdoc.options << "--title" << "RScribd Documentation".inspect
+  rdoc.options << '--charset' << 'utf-8'
+  rdoc.options << '-r' << 'README'
+  rdoc.options << '--protected' << '--no-private'
+  rdoc.options << '--markup' << 'textile'
+  rdoc.files << "lib/**/*.rb"
 end

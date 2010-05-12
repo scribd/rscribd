@@ -11,9 +11,9 @@ module Scribd
   # Raised when trying to perform an action that isn't allowed for the current
   # active user. Note that this exception is thrown only if the error originates
   # locally. If the request must go out to the Scribd server before the
-  # privilege error occurs, a Scribd::ResponseError will be thrown. Unless a
+  # privilege error occurs, a {Scribd::ResponseError} will be thrown. Unless a
   # method's documentation indicates otherwise, assume that the error will
-  # originate remotely and a Scribd::ResponseError will be thrown.
+  # originate remotely and a {Scribd::ResponseError} will be thrown.
   
   class PrivilegeError < StandardError; end
   
@@ -22,11 +22,10 @@ module Scribd
   # their descriptions for each API method.
   
   class ResponseError < RuntimeError
-    # The error code.
+    # @return [Fixnum, String] The error code.
     attr_reader :code
     
-    # Initializes the error with a given code.
-    
+    # @private
     def initialize(code)
       @code = code
     end
