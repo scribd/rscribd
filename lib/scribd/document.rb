@@ -212,20 +212,15 @@ module Scribd
       docs_by_user.each { |user, doc_list| API.instance.send_request 'docs.changeSettings', options.merge(:doc_ids => doc_list.collect(&:id).join(','), :session_key => user.session_key) }
     end
 
-    # @overload find(scope, options={})
-    #   This method is called with a scope and a hash of options to documents by
-    #   their content. You must at a minimum supply a @query@ option, with a
-    #   string that will become the full-text search query. For a list of other
+    # @overload find(options={})
+    #   This method is called with a hash of options to documents by their
+    #   content. You must at a minimum supply a @query@ option, with a string
+    #   that will become the full-text search query. For a list of other
     #   supported options, please see the online API documentation.
-    #
-    #   The scope can be any value given for the @scope@ parameter in the above
-    #   website, or @:first@ to return the first result only (not an array of
-    #   results).
     #
     #   Documents retrieved by this method have no {User} stored in their
     #   @owner@ attribute; in other words, they cannot be modified.
     #
-    #   @param [Symbol] scope The scope in which to do the search.
     #   @param [Hash] options Options for the search.
     #   @option options [String] :query The search query (required).
     #   @option options [Fixnum] :limit An alias for the @num_results@ option.
@@ -251,16 +246,14 @@ module Scribd
     # @raise [ArgumentError] If neither of the two correct argument forms is
     # provided.
     
-    def self.find(scope, options={})
-      doc_id = scope.kind_of?(Integer) ? scope : nil
-      raise ArgumentError, "You must specify a query or document ID" unless options[:query] or doc_id
+    def self.find(options={})
+      doc_id = options.kind_of?(Integer) ? options : nil
+      raise ArgumentError, "You must specify a query or document ID" unless doc_id or (options.kind_of?(Hash) and options[:query])
       
       if doc_id then
-        options[:doc_id] = doc_id
-        response = API.instance.send_request('docs.getSettings', options)
+        response = API.instance.send_request('docs.getSettings', :doc_id => doc_id)
         return Document.new(:xml => response.elements['/rsp'])
       else
-        options[:scope] = scope == :first ? 'all' : scope.to_s
         options[:num_results] = options[:limit]
         options[:num_start] = options[:offset]
         response = API.instance.send_request('docs.search', options)
@@ -268,67 +261,54 @@ module Scribd
         response.elements['/rsp/result_set'].elements.each do |doc|
           documents << Document.new(:xml => doc)
         end
-        return scope == :first ? documents.first : documents
+        return documents
       end
     end
 
-    # Returns featured documents found in a given scope and with given options.
+    # Returns featured documents found in a given with given options.
     #
-    # This method is called with a scope and a hash of options. For a list of
-    # supported options, please see the online API documentation.
-    #
-    # The scope can be either @:first@ to return the first result only (not an
-    # array of results) or @:all@ to return an array.
+    # This method is called with a hash of options. For a list of supported
+    # options, please see the online API documentation.
     #
     # Documents returned from this method will have their @owner@ attributes set
     # to @nil@ (i.e., they are read-only).
     #
-    # @param [Symbol] scope The scope in which to do the search.
     # @param [Hash] options Options to pass to the API find method.
-    # @return [Scribd::Document] A single document if the scope was @:first@.
-    # @return [nil] If the scope was @:first@ and no document was found.
-    # @return [Array<Scribd::Document>] An array of documents if the scope was
-    # @:all@.
+    # @return [Array<Scribd::Document>] An array of documents found.
     # @example
-    #   Scribd::Document.featured(:all, :scope => 'hot', :limit => 10)
+    #   Scribd::Document.featured(:scope => 'hot', :limit => 10)
 
-    def self.featured(scope, options = {})
+    def self.featured(options = {})
       response = API.instance.send_request('docs.featured', options)
       documents = []
       response.elements['/rsp/result_set'].elements.each do |doc|
         documents << Document.new(:xml => doc)
       end
-      scope == :first ? documents.first : documents
+      return documents
     end
 
-    # Returns documents found by the Scribd browser in a given scope and with
-    # given options. The browser provides documents suitable for a browse page.
+    # Returns documents found by the Scribd browser with given options. The
+    # browser provides documents suitable for a browse page.
     #
-    # This method is called with a scope and a hash of options. For a list of
-    # supported options, please see the online API documentation.
-    #
-    # The scope can be either @:first@ to return the first result only (not an
-    # array of results) or @:all@ to return an array.
+    # This method is called with a hash of options. For a list of supported
+    # options, please see the online API documentation.
     #
     # Documents returned from this method will have their @owner@ attributes set
     # to @nil@ (i.e., they are read-only).
     #
-    # @param [Symbol] scope The scope in which to do the search.
     # @param [Hash] options Options to pass to the API find method.
-    # @return [Scribd::Document] A single document if the scope was @:first@.
-    # @return [nil] If the scope was @:first@ and no document was found.
-    # @return [Array<Scribd::Document>] An array of documents if the scope was
-    # @:all@.
+    # @return [Array<Scribd::Document>] An array of documents found.
     # @example
-    #   Scribd::Document.browse(:all, :sort => 'views', :category_id => 1, :limit => 10)
+    #   Scribd::Document.browse(:sort => 'views', :limit => 10)
+    # @see Scribd::Category#browse
 
-    def self.browse(scope, options = {})
+    def self.browse(options = {})
       response = API.instance.send_request('docs.browse', options)
       documents = []
       response.elements['/rsp/result_set'].elements.each do |doc|
         documents << Document.new(:xml => doc)
       end
-      scope == :first ? documents.first : documents
+      return documents
     end
 
     class << self

@@ -436,8 +436,8 @@ describe Scribd::Document do
       lambda { Scribd::Document.find('oh hai') }.should raise_error(ArgumentError)
     end
     
-    it "should raise an ArgumentError if a query is not provided for scoped lookups" do
-      lambda { Scribd::Document.find(:all, :title => 'hi') }.should raise_error(ArgumentError)
+    it "should raise an ArgumentError if a query is not provided for non-ID lookups" do
+      lambda { Scribd::Document.find(:title => 'hi') }.should raise_error(ArgumentError)
     end
     
     describe "by ID" do
@@ -448,11 +448,6 @@ describe Scribd::Document do
       it "should call getSettings with the doc ID" do
         Scribd::API.instance.should_receive(:send_request).once.with('docs.getSettings', hash_including(:doc_id => 123)).and_return(@xml)
         Scribd::Document.find 123
-      end
-      
-      it "should pass other options to the getSettings call" do
-        Scribd::API.instance.should_receive(:send_request).once.with('docs.getSettings', hash_including(:arg => 'val')).and_return(@xml)
-        Scribd::Document.find 123, :arg => 'val'
       end
       
       it "should return a Document created from the resulting XML" do
@@ -468,34 +463,22 @@ describe Scribd::Document do
         @xml = REXML::Document.new("<rsp stat='ok'><result_set><result><access_key>abc123</access_key></result><result><access_key>abc321</access_key></result></result_set></rsp>")
       end
       
-      it "should set the scope field according to the parameter" do
-        Scribd::API.instance.should_receive(:send_request).with('docs.search', hash_including(:scope => 'all')).and_return(@xml)
-        Scribd::Document.find(:all, :query => 'test')
-      end
-      
       it "should return an ordered array of Document results" do
         Scribd::API.instance.stub!(:send_request).and_return(@xml)
-        docs = Scribd::Document.find(:all, :query => 'test')
+        docs = Scribd::Document.find(:query => 'test')
         docs.should have(2).items
         docs.first.access_key.should eql('abc123')
         docs.last.access_key.should eql('abc321')
       end
       
-      it "should set the scope to 'all' and return the first result if :first is provided" do
-        Scribd::API.instance.should_receive(:send_request).with('docs.search', hash_including(:scope => 'all')).and_return(@xml)
-        docs = Scribd::Document.find(:first, :query => 'test')
-        docs.should be_kind_of(Scribd::Document)
-        docs.access_key.should eql('abc123')
-      end
-      
       it "should set the num_results field to the limit option" do
         Scribd::API.instance.should_receive(:send_request).with('docs.search', hash_including(:num_results => 10)).and_return(@xml)
-        docs = Scribd::Document.find(:all, :query => 'test', :limit => 10)
+        docs = Scribd::Document.find(:query => 'test', :limit => 10)
       end
       
       it "should set the num_start field to the offset option" do
         Scribd::API.instance.should_receive(:send_request).with('docs.search', hash_including(:num_start => 10)).and_return(@xml)
-        docs = Scribd::Document.find(:all, :query => 'test', :offset => 10)
+        docs = Scribd::Document.find(:query => 'test', :offset => 10)
       end
     end
   end
@@ -505,16 +488,17 @@ describe Scribd::Document do
       @xml = REXML::Document.new("<rsp stat='ok'><result_set><result><access_key>abc123</access_key></result><result><access_key>abc321</access_key></result></result_set></rsp>")
     end
 
-    it "should set the scope field according the options" do
-      Scribd::API.instance.should_receive(:send_request).with('docs.featured', hash_including(:scope => 'hot')).and_return(@xml)
-      Scribd::Document.featured(:all, :scope => 'hot', :limit => 10)
-    end
-
-    it "should return first result if :first is provided" do
+    it "should call the docs.featured API method" do
       Scribd::API.instance.should_receive(:send_request).with('docs.featured', {}).and_return(@xml)
-      docs = Scribd::Document.featured(:first)
-      docs.should be_kind_of(Scribd::Document)
-      docs.access_key.should eql('abc123')
+      docs = Scribd::Document.featured
+      docs.should be_kind_of(Array)
+      docs.first.should be_kind_of(Scribd::Document)
+      docs.first.access_key.should eql('abc123')
+    end
+    
+    it "should pass options to the API" do
+      Scribd::API.instance.should_receive(:send_request).with('docs.featured', :foo => 'bar').and_return(@xml)
+      docs = Scribd::Document.featured(:foo => 'bar')
     end
   end
 
@@ -523,20 +507,19 @@ describe Scribd::Document do
       @xml = REXML::Document.new("<rsp stat='ok'><result_set><result><access_key>abc123</access_key></result><result><access_key>abc321</access_key></result></result_set></rsp>")
     end
 
-    it "should not pass the scope parameter in the options" do
-      Scribd::API.instance.should_receive(:send_request).with('docs.browse', hash_including(:sort => 'views', :category_id => 1, :limit => 10)).and_return(@xml)
-      Scribd::Document.browse(:all, :sort => 'views', :category_id => 1, :limit => 10)
-    end
-
-    it "should return first result if :first is provided" do
+    it "should call the docs.browse method" do
       Scribd::API.instance.should_receive(:send_request).with('docs.browse', {}).and_return(@xml)
-      docs = Scribd::Document.browse(:first)
-      docs.should be_kind_of(Scribd::Document)
-      docs.access_key.should eql('abc123')
+      docs = Scribd::Document.browse
+      docs.should be_kind_of(Array)
+      docs.first.should be_kind_of(Scribd::Document)
+      docs.first.access_key.should eql('abc123')
+    end
+    
+    it "should pass options to the API" do
+      Scribd::API.instance.should_receive(:send_request).with('docs.browse', :foo => 'bar').and_return(@xml)
+      docs = Scribd::Document.browse(:foo => 'bar')
     end
   end
-
-  it "should have an upload synonym for the create method"
 
   describe ".conversion_status" do
     before :each do
