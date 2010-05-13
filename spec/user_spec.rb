@@ -228,6 +228,33 @@ describe Scribd::User do
     end
   end
   
+  describe "#auto_sign_in_url" do
+    before :each do
+      @response = REXML::Document.new('<rsp><url><![CDATA[hello]]></url></rsp>').root
+    end
+    
+    subject { Scribd::User.new(:xml => REXML::Document.new("<rsp stat='ok'><user_id type='integer'>225</user_id><username>sancho</username><name>Sancho Sample</name><session_key>some key</session_key></rsp>").root) }
+    
+    it "should raise NotReadyError if the user isn't saved" do
+      lambda { Scribd::User.new.auto_sign_in_url }.should raise_error(Scribd::NotReadyError)
+    end
+    
+    it "should call the API method user.getAutoSignInUrl" do
+      Scribd::API.instance.should_receive(:send_request).once.with('user.getAutoSignInUrl', :session_key => 'some key', :next_url => 'foobar').and_return(@response)
+      subject.auto_sign_in_url('foobar')
+    end
+    
+    it "should set next_url to a blank string by default" do
+      Scribd::API.instance.should_receive(:send_request).once.with('user.getAutoSignInUrl', :session_key => 'some key', :next_url => '').and_return(@response)
+      subject.auto_sign_in_url
+    end
+    
+    it "should return the URL returned by the API" do
+      Scribd::API.instance.stub!(:send_request).and_return(@response)
+      subject.auto_sign_in_url.should eql('hello')
+    end
+  end
+  
   describe ".username" do
     before :each do
       @xml = REXML::Document.new("<rsp stat='ok'><username>sancho</username><name>Sancho Sample</name></rsp>")

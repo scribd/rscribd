@@ -46,7 +46,7 @@ module Scribd
     # attributes, then logs in as that user. Currently modification of existing
     # Scribd users is not supported.
     #
-    # @raise [ResponseError] If a remote error occurs.
+    # @raise [Scribd::ResponseError] If a remote error occurs.
     
     def save
       if not created? then
@@ -119,7 +119,7 @@ module Scribd
     # {Scribd::Document#save} method for more information on the options hash.
     #
     # @param [Hash] options Options to pass to the API upload method.
-    # @raise [NotReadyError] If the user is unsaved.
+    # @raise [Scribd::NotReadyError] If the user is unsaved.
     
     def upload(options)
       raise NotReadyError, "User hasn't been created yet" unless created?
@@ -133,7 +133,7 @@ module Scribd
     # @param [Hash] options Options to pass to the API collections search
     # method.
     # @return [Array<Scribd::Collection>] The collections created by this user.
-    # @raise [NotReadyError] If the user is unsaved
+    # @raise [Scribd::NotReadyError] If the user is unsaved
     
     def collections(options={})
       raise NotReadyError, "User hasn't been created yet" unless created?
@@ -143,6 +143,20 @@ module Scribd
         collections << Collection.new(:xml => coll, :owner => self)
       end
       return collections
+    end
+    
+    # Returns a URL that, when visited, will automatically sign in this user and
+    # then redirect to the provided URL.
+    #
+    # @param [String] next_url The URL to redirect to after signing in. By
+    # default the user is redirected to the home page.
+    # @return [String] An auto-sign-in URL.
+    # @raise [Scribd::NotReadyError] If the receiver is not an existing user.
+    
+    def auto_sign_in_url(next_url="")
+      raise NotReadyError, "User hasn't been created yet" unless created?
+      response = API.instance.send_request('user.getAutoSignInUrl', :session_key => @attributes[:session_key], :next_url => next_url)
+      return response.get_elements('/rsp/url').first.cdatas.first.to_s
     end
     
     class << self
@@ -159,7 +173,7 @@ module Scribd
     
     def self.login(username, password)
       response = API.instance.send_request('user.login', { :username => username, :password => password })
-      xml = response.get_elements('/rsp')[0]
+      xml = response.get_elements('/rsp').first
       user = User.new(:xml => xml)
       API.instance.user = user
       return user
