@@ -126,6 +126,25 @@ module Scribd
       Document.create options.merge(:owner => self)
     end
     
+    # Returns the collections this user has created. For information about
+    # search options, see the online API documentation. The list of collections
+    # is not memoized or cached locally.
+    #
+    # @param [Hash] options Options to pass to the API collections search
+    # method.
+    # @return [Array<Scribd::Collection>] The collections created by this user.
+    # @raise [NotReadyError] If the user is unsaved
+    
+    def collections(options={})
+      raise NotReadyError, "User hasn't been created yet" unless created?
+      response = API.instance.send_request('docs.getCollections', options.merge(:session_key => @attributes[:session_key]))
+      collections = Array.new
+      response.elements['/rsp/resultset'].elements.each do |coll|
+        collections << Collection.new(:xml => coll, :owner => self)
+      end
+      return collections
+    end
+    
     class << self
       alias_method :signup, :create
     end

@@ -92,6 +92,67 @@ describe Scribd::User do
       end
     end
     
+    describe "#collections" do
+      before :each do
+        @user = Scribd::User.new(:xml => REXML::Document.new("<rsp stat='ok'><user_id type='integer'>225</user_id><username>sancho</username><name>Sancho Sample</name><session_key>some key</session_key></rsp>").root)
+        @response = <<-EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <rsp stat="ok">
+            <resultset list="true">
+              <result>
+                <collection_id>61</collection_id>
+                <collection_name>My Collection</collection_name>
+                <doc_count>5</doc_count>
+              </result>
+              <result>
+                <collection_id>62</collection_id>
+                <collection_name>My Other Collection</collection_name>
+                <doc_count>1</doc_count>
+              </result>
+            </resultset>
+          </rsp>
+        EOF
+      end
+      
+      it "should raise NotReadyError for new users" do
+        user = Scribd::User.new
+        lambda { user.collections }.should raise_error(Scribd::NotReadyError)
+      end
+      
+      it "should call the docs.getCollections API method" do
+        Scribd::API.instance.should_receive(:send_request).once.with('docs.getCollections', :session_key => 'some key').and_return(REXML::Document.new(@response))
+        @user.collections
+      end
+      
+      it "should pass options to the API method" do
+        Scribd::API.instance.should_receive(:send_request).once.with('docs.getCollections', :session_key => 'some key', :other => 'option').and_return(REXML::Document.new(@response))
+        @user.collections(:other => 'option')
+      end
+      
+      it "should return an array of collections" do
+        Scribd::API.instance.should_receive(:send_request).once.with('docs.getCollections', an_instance_of(Hash)).and_return(REXML::Document.new(@response))
+        list = @user.collections
+        list.should be_kind_of(Array)
+        list.size.should eql(2)
+        
+        list.first.should be_kind_of(Scribd::Collection)
+        list.first.collection_id.should eql('61')
+        list.first.collection_name.should eql('My Collection')
+        list.first.doc_count.should eql('5')
+        
+        list.last.should be_kind_of(Scribd::Collection)
+        list.last.collection_id.should eql('62')
+        list.last.collection_name.should eql('My Other Collection')
+        list.last.doc_count.should eql('1')
+      end
+      
+      it "should set each collection's owner" do
+        Scribd::API.instance.should_receive(:send_request).once.with('docs.getCollections', an_instance_of(Hash)).and_return(REXML::Document.new(@response))
+        list = @user.collections
+        list.each { |coll| coll.owner.should eql(@user) }
+      end
+    end
+    
     describe "find_documents method" do
       it "should call Document.find with an appropriate scope and session key" do
         Scribd::Document.should_receive(:find).once.with(hash_including(:scope => 'user', :session_key => 'some key'))
