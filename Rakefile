@@ -15,6 +15,7 @@ begin
     
     gemspec.add_dependency 'mime-types'
     gemspec.add_development_dependency "rspec"
+    gemspec.add_development_dependency "yard"
   end
   Jeweler::RubyforgeTasks.new do |rubyforge|
     rubyforge.doc_task = "rdoc"
@@ -23,6 +24,8 @@ begin
 rescue LoadError
   puts "Jeweler not available. Install it with: gem install jeweler"
 end
+
+task :default => :spec
 
 desc "Verify gem specs"
 Spec::Rake::SpecTask.new do |t|
