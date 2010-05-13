@@ -32,11 +32,11 @@ module Scribd
     # Adds a {Document} to this collection.
     #
     # @param [Scribd::Document] document The document to add.
-    # @param [true, false] ignore_if_exists If false, raises an exception if the
-    # document is already in the collection.
+    # @param [true, false] ignore_if_exists If @false@, raises an exception if
+    # the document is already in the collection.
     # @return [Scribd::Document] The @document@ parameter.
     # @raise [ArgumentError] If an invalid value for @document@ is provided.
-    # @raise [Scribd::ResponseError] If @ignore_if_exists@ is set to false and
+    # @raise [Scribd::ResponseError] If @ignore_if_exists@ is set to @false@ and
     # the document already exists in the collection. See the online API
     # documentation for more information.
     
@@ -60,12 +60,12 @@ module Scribd
     # Removes a {Document} from this collection.
     #
     # @param [Scribd::Document] document The document to remove.
-    # @param [true, false] ignore_if_missing If false, raises an exception if
+    # @param [true, false] ignore_if_missing If @false@, raises an exception if
     # the document is not in the collection.
     # @return [Scribd::Document] The @document@ parameter.
     # @raise [ArgumentError] If an invalid value for @document@ is provided.
-    # @raise [Scribd::ResponseError] If @ignore_if_missing@ is set to false and
-    # the document does not exist in the collection. See the online API
+    # @raise [Scribd::ResponseError] If @ignore_if_missing@ is set to @false@
+    # and the document does not exist in the collection. See the online API
     # documentation for more information.
     
     def remove(document, ignore_if_missing=true)
