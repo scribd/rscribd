@@ -1,3 +1,13 @@
+=== 1.2.0 / 2010-5-13
+
+* Added support for collections.
+* Added support for iPaper Secure.
+* Added support for categories.
+* Added support for the docs.uploadThumb API method.
+* Added support for the user.autoSignInUrl API method.
+* Simplified the finder methods for Users and Documents.
+* Switched from RDoc to YARD for gem documentation.
+
 === 1.1.0 / 2010-3-16
 
 * Switched from Hoe to Jeweler.
