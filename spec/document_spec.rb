@@ -628,6 +628,30 @@ describe Scribd::Document do
       @document.download_url.should eql("http://www.example.com/doc.pdf")
     end
   end
+  
+  describe "#grant_access" do
+    it "should call Scribd::Security.grant_access" do
+      doc = Scribd::Document.new
+      Scribd::Security.should_receive(:grant_access).once.with('foo', doc)
+      doc.grant_access('foo')
+    end
+  end
+  
+  describe "#revoke_access" do
+    it "should call Scribd::Security.revoke_access" do
+      doc = Scribd::Document.new
+      Scribd::Security.should_receive(:revoke_access).once.with('foo', doc)
+      doc.revoke_access('foo')
+    end
+  end
+  
+  describe "#access_list" do
+    it "should call Scribd::Security.document_access_list" do
+      doc = Scribd::Document.new
+      Scribd::Security.should_receive(:document_access_list).once.with(doc)
+      doc.access_list
+    end
+  end
 end
 
 Dir.chdir old_dir

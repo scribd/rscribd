@@ -358,7 +358,35 @@ module Scribd
       return response.elements['/rsp'].attributes['stat'] == 'ok'
     end
     
-    # An alias for the @doc_id@ attribute.
+    # Grants a user access to this document.
+    #
+    # @param [String] user_identifier The user identifier as used in your embed
+    # code.
+    # @see Scribd::Security.grant_access
+    
+    def grant_access(user_identifier)
+      Scribd::Security.grant_access user_identifier, self
+    end
+    
+    # Revokes access to this document from a user.
+    #
+    # @param [String] user_identifier The user identifier as used in your embed
+    # code.
+    # @see Scribd::Security.revoke_access
+    
+    def revoke_access(user_identifier)
+      Scribd::Security.revoke_access user_identifier, self
+    end
+    
+    # @return [Array<String>] A list of user identifiers that have access to
+    # this document.
+    # @see Scribd::Security.document_access_list
+    
+    def access_list
+      Scribd::Security.document_access_list(self)
+    end
+    
+    # @return The @document_id@ attribute.
     
     def id
       self.doc_id
