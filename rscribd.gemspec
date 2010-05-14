@@ -32,6 +32,7 @@ Gem::Specification.new do |s|
      "lib/scribd/user.rb",
      "lib/support/extensions.rb",
      "lib/support/multipart_hack.rb",
+     "rscribd.gemspec",
      "sample/01_upload.rb",
      "sample/02_user.rb",
      "sample/test.txt",
