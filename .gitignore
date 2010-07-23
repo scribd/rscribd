@@ -3,3 +3,4 @@ pkg
 .idea
 .DS_Store
 .yardoc
+.rvmrc
