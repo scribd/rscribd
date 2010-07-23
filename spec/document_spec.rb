@@ -652,6 +652,79 @@ describe Scribd::Document do
       doc.access_list
     end
   end
+  
+  describe "#thumbnail_url" do
+    before :each do
+      @doc = Scribd::Document.new(:doc_id => 123)
+    end
+    
+    it "should call Scribd::Document.thumbnail_url" do
+      Scribd::Document.should_receive(:thumbnail_url).once.with(123, {})
+      @doc.thumbnail_url
+    end
+    
+    it "should pass options" do
+      Scribd::Document.should_receive(:thumbnail_url).once.with(123, { :page => 10 })
+      @doc.thumbnail_url(:page => 10)
+    end
+  end
+  
+  describe ".thumbnail_url" do
+    before :each do
+      @url = "http://imgv2-2.scribdassets.com/img/word_document/1/111x142/ff94c77a69/1277782307"
+      @response = REXML::Document.new(<<-EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <rsp stat="ok">
+          <thumbnail_url>#{@url}</thumbnail_url>
+        </rsp>
+      EOF
+      )
+    end
+    
+    it "should raise an exception if both width/height and size are specified" do
+      Scribd::API.instance.stub!(:send_request).and_return(@response)
+      lambda { Scribd::Document.thumbnail_url(123, :width => 123, :size => [ 1, 2 ]) }.should raise_error(ArgumentError)
+      lambda { Scribd::Document.thumbnail_url(123, :height => 123, :size => [ 1, 2 ]) }.should raise_error(ArgumentError)
+      lambda { Scribd::Document.thumbnail_url(123, :width => 123, :height => 321, :size => [ 1, 2 ]) }.should raise_error(ArgumentError)
+    end
+    
+    it "should raise an exception if size is not an array" do
+      Scribd::API.instance.stub!(:send_request).and_return(@response)
+      lambda { Scribd::Document.thumbnail_url(123, :size => 123) }.should raise_error(ArgumentError)
+    end
+    
+    it "should raise an exception if size is not 2 elements long" do
+      Scribd::API.instance.stub!(:send_request).and_return(@response)
+      lambda { Scribd::Document.thumbnail_url(123, :size => [ 1 ]) }.should raise_error(ArgumentError)
+      lambda { Scribd::Document.thumbnail_url(123, :size => [ 1, 2, 3 ]) }.should raise_error(ArgumentError)
+    end
+    
+    it "should raise an exception if either width xor height is specified" do
+      Scribd::API.instance.stub!(:send_request).and_return(@response)
+      lambda { Scribd::Document.thumbnail_url(123, :width => 123) }.should raise_error(ArgumentError)
+      lambda { Scribd::Document.thumbnail_url(123, :height => 123) }.should raise_error(ArgumentError)
+    end
+    
+    it "should call the thumbnail.get API method" do
+      Scribd::API.instance.should_receive(:send_request).once.with('thumbnail.get', :doc_id => 123).and_return(@response)
+      Scribd::Document.thumbnail_url(123).should eql(@url)
+    end
+    
+    it "should pass the width and height" do
+      Scribd::API.instance.should_receive(:send_request).once.with('thumbnail.get', :doc_id => 123, :width => 2, :height => 4).and_return(@response)
+      Scribd::Document.thumbnail_url(123, :width => 2, :height => 4)
+    end
+    
+    it "should pass a size" do
+      Scribd::API.instance.should_receive(:send_request).once.with('thumbnail.get', :doc_id => 123, :width => 2, :height => 4).and_return(@response)
+      Scribd::Document.thumbnail_url(123, :size => [ 2, 4 ])
+    end
+    
+    it "should pass the page number" do
+      Scribd::API.instance.should_receive(:send_request).once.with('thumbnail.get', :doc_id => 123, :page => 10).and_return(@response)
+      Scribd::Document.thumbnail_url(123, :page => 10)
+    end
+  end
 end
 
 Dir.chdir old_dir

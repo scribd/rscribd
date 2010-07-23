@@ -14,6 +14,14 @@ class Hash
        options
      end
    end unless method_defined?(:stringify_keys)
+   
+   def compact
+     reject { |key, val| val.nil? }
+   end
+   
+   def compact!
+     delete_if { |key, val| val.nil? }
+   end
 end
 
 # @private

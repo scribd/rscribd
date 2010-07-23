@@ -386,6 +386,61 @@ module Scribd
       Scribd::Security.document_access_list(self)
     end
     
+    # Returns a URL for a thumbnail image of this document.
+    #
+    # @param [Hash] options Options for customizing the thumbnail image.
+    # @option options [Fixnum] :page (1) The page number to generate a thumbnail
+    # of.
+    # @option options [Fixnum] :width The width of the image, in pixels.
+    # @option options [Fixnum] :height The height of the image, in pixels.
+    # @option options [Array<Fixnum>] :size A two-element array consisting of
+    # the width and height of the image, in pixels.
+    # @return [String] The URL of the thumbnail image.
+    # @raise [ArgumentError] If @:width@ is specified but @:height@ is not, or
+    # vice versa.
+    # @raise [ArgumentError] If @:width@ and @:size@ are both specified.
+    # @raise [ArgumentError] If @:size@ is not a two-item array.
+    
+    def thumbnail_url(options={})
+      self.class.thumbnail_url self.id, options
+    end
+    
+    # Returns a URL for a thumbnail image of a given document. The document must
+    # be public, or you must own it.
+    #
+    # @param [Fixnum] id The document's ID on the Scribd website.
+    # @param [Hash] options Options for customizing the thumbnail image.
+    # @option options [Fixnum] :page (1) The page number to generate a thumbnail
+    # of.
+    # @option options [Fixnum] :width The width of the image, in pixels.
+    # @option options [Fixnum] :height The height of the image, in pixels.
+    # @option options [Array<Fixnum>] :size A two-element array consisting of
+    # the width and height of the image, in pixels.
+    # @return [String] The URL of the thumbnail image.
+    # @raise [ArgumentError] If @:width@ is specified but @:height@ is not, or
+    # vice versa.
+    # @raise [ArgumentError] If @:width@ and @:size@ are both specified.
+    # @raise [ArgumentError] If @:size@ is not a two-item array.
+    
+    def self.thumbnail_url(id, options={})
+      w = h = nil
+      if (options[:width] or options[:height]) and options[:size] then
+        raise ArgumentError, "Cannot specify both width/height and size"
+      elsif options[:width] and options[:height] then
+        w = options[:width]
+        h = options[:height]
+      elsif options[:size] then
+        raise ArgumentError, "Size option must be a two-element array" unless options[:size].kind_of?(Array) and options[:size].size == 2
+        w = options[:size].first
+        h = options[:size].last
+      elsif options[:width] or options[:height] then
+        raise ArgumentError, "Must specify both width and height, or neither"
+      end
+      
+      response = API.instance.send_request('thumbnail.get', { :doc_id => id, :width => w, :height => h, :page => options[:page] }.compact)
+      response.elements['/rsp/thumbnail_url'].text
+    end
+    
     # @return The @document_id@ attribute.
     
     def id
