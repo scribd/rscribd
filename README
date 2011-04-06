@@ -15,6 +15,7 @@ h2. FEATURES:
 * Upload local files or from remote web sites
 * Search, tag, and organize documents
 * Associate documents with your users' accounts
+* Display Scribd Reader on your views
 
 h2. SYNOPSIS:
 
@@ -48,6 +49,27 @@ upload a document:
 For more information, please see the documentation for the Scribd::API,
 Scribd::User, and Scribd::Document classes. (You can also check out the docs for
 the other classes for a more in-depth look at this gem's features).
+
+To display a Scribd reader on your view, simply include RscribdHelper to your view's helper.
+
+<pre><code>
+module PdfFileHelper
+  include RscribdHelper
+end
+</code></pre>
+
+Then in your view, you can display your document like so:
+
+<pre><code>
+  <%= display_scribd_reader(@pdffile.scribd_doc_id, @pdffile.scribd_doc_access_key) %>
+</code></pre>
+or with options:
+<pre><code>
+  <%= display_scribd_reader(@pdffile.scribd_doc_id, @pdffile.scribd_doc_access_key, :width => 300, :height => 500) %>
+</code></pre>
+
+Available options are :
+http://www.scribd.com/developers/api?method_name=Javascript+API#parameters
 
 h2. REQUIREMENTS:
 
