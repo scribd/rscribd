@@ -22,6 +22,7 @@ Gem::Specification.new do |s|
      "Rakefile",
      "VERSION",
      "lib/rscribd.rb",
+     "lib/rscribd_helper.rb",
      "lib/scribd/api.rb",
      "lib/scribd/category.rb",
      "lib/scribd/collection.rb",
