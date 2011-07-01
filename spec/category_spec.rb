@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 CATEGORY = Proc.new { |id, name, children|
   id ||= rand(1000)
   name ||= "Test Category #{id}"
@@ -42,7 +44,7 @@ describe Scribd::Category do
     end
     
     context "attributes" do
-      its(:id) { should eql('12') }
+      its(:scribd_id) { should eql('12') }
       its(:name) { should eql('test') }
     end
     
@@ -53,7 +55,7 @@ describe Scribd::Category do
       Scribd::API.instance.should_not_receive(:send_request) # not really being tested here, but we should make sure we don't actually make remote requests
       category.children.should be_kind_of(Array)
       category.children.first.should be_kind_of(Scribd::Category)
-      category.children.first.id.should eql('100')
+      category.children.first.scribd_id.should eql('100')
       category.children.first.name.should eql('Test Category 100')
       category.children.first.children_preloaded?.should be_false
       category.children.first.parent.should eql(category)
@@ -76,7 +78,7 @@ describe Scribd::Category do
   
   describe :all do
     before :each do
-      @response = REXML::Document.new(RESULT.call).root
+      @response = REXML::Document.new(RESULT.call(CATEGORY_TAG.call)).root
     end
     
     it "should send an API request to docs.getCategories" do

@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe Scribd::Collection do
   before :each do
     Scribd::API.instance.key = 'test key'

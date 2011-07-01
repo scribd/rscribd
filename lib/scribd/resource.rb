@@ -45,6 +45,11 @@ module Scribd
       @created = false
       @attributes = Hash.new
     end
+
+    # Return the Scribd ID for a resource, so as not to conflict with object.id
+    def scribd_id
+      @attributes[:id]
+    end
     
     # Creates a new instance with the given attributes, saves it immediately,
     # and returns it. You should call its {#created?} method if you need to

@@ -1,6 +1,4 @@
-old_dir = Dir.getwd
-Dir.chdir(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'rscribd'
+require 'spec_helper'
 
 describe Scribd::ResponseError do
   it "should set the code attribute on initialization" do
@@ -8,5 +6,3 @@ describe Scribd::ResponseError do
     error.code.should eql(123)
   end
 end
-
-Dir.chdir old_dir

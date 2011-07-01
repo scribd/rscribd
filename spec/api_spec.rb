@@ -1,6 +1,4 @@
-old_dir = Dir.getwd
-Dir.chdir(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'rscribd'
+require 'spec_helper'
 
 describe Scribd::API do
   it "should be a singleton" do
@@ -127,5 +125,3 @@ Content-Disposition: form-data; name=#{key.to_s.inspect}
     Scribd::API.instance.user.should_not be_nil
   end
 end
-
-Dir.chdir old_dir

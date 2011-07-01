@@ -1,6 +1,4 @@
-old_dir = Dir.getwd
-Dir.chdir(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'rscribd'
+require 'spec_helper'
 
 describe Symbol do
   it "should define a to_proc method" do
@@ -31,5 +29,3 @@ describe Array do
     [ [ 1, 2], [3, 4] ].to_hsh.should == { 1 => 2, 3 => 4 }
   end
 end
-
-Dir.chdir old_dir

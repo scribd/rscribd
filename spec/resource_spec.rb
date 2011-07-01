@@ -1,6 +1,4 @@
-old_dir = Dir.getwd
-Dir.chdir(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'rscribd'
+require 'spec_helper'
 
 describe Scribd::Resource do
   describe "initialized from attributes" do
@@ -122,5 +120,3 @@ describe Scribd::Resource do
     end
   end
 end
-
-Dir.chdir old_dir

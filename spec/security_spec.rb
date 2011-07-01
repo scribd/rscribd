@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe Scribd::Security do
   before :each do
     @document = Scribd::Document.new(:xml => REXML::Document.new('<result><doc_id>123</doc_id></result>').root)

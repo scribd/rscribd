@@ -77,7 +77,7 @@ module Scribd
     
     def children
       return @children if @children
-      response = API.instance.send_request('docs.getCategories', :category_id => self.id)
+      response = API.instance.send_request('docs.getCategories', :category_id => self.scribd_id)
       children = Array.new
       response.get_elements('/rsp/result_set/result').each do |res|
         children << Category.new(:xml => res)
@@ -101,7 +101,7 @@ module Scribd
     #   category.browse(:sort => 'views', :category_id => 1, :limit => 10)
     
     def browse(options={})
-      response = API.instance.send_request('docs.browse', options.merge(:category_id => self.id))
+      response = API.instance.send_request('docs.browse', options.merge(:category_id => self.scribd_id))
       documents = []
       response.elements['/rsp/result_set'].elements.each do |doc|
         documents << Document.new(:xml => doc)
