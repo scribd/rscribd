@@ -14,24 +14,25 @@ module Net
       boundary_token = [Array.new(8) {rand(256)}].join
       self.content_type = "multipart/form-data; boundary=#{boundary_token}"
       boundary_marker = "--#{boundary_token}\r\n"
-      self.body = param_hash.map do |param_name, param_value|
-        boundary_marker + case param_value
+      self.body = param_hash.inject('') do |memo, (param_name, param_value)|
+        memo << boundary_marker
+        case param_value
         when File
-          file_to_multipart(param_name, param_value)
+          file_to_multipart(memo, param_name, param_value)
         else
-          text_to_multipart(param_name, param_value.to_s)
+          memo << text_to_multipart(param_name, param_value.to_s)
         end
-      end.join('') + "--#{boundary_token}--\r\n"
+      end << "--#{boundary_token}--\r\n"
     end
 
     protected
-    def file_to_multipart(key,file)
+    def file_to_multipart(memo, key,file)
       filename = File.basename(file.path)
       mime_types = MIME::Types.of(filename)
       mime_type = mime_types.empty? ? "application/octet-stream" : mime_types.first.content_type
-      part = %Q|Content-Disposition: form-data; name="#{key}"; filename="#{filename}"\r\n|
-      part += "Content-Transfer-Encoding: binary\r\n"
-      part += "Content-Type: #{mime_type}\r\n\r\n#{file.read}\r\n"
+      memo << %Q|Content-Disposition: form-data; name="#{key}"; filename="#{filename}"\r\n|
+      memo << "Content-Transfer-Encoding: binary\r\n"
+      memo << "Content-Type: #{mime_type}\r\n\r\n#{file.read}\r\n"
     end
 
     def text_to_multipart(key,value)
