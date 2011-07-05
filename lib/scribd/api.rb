@@ -83,6 +83,17 @@ module Scribd
       @key = ENV['SCRIBD_API_KEY']
       @secret = ENV['SCRIBD_API_SECRET']
       @user = User.new
+      disable_multipart_post_gem
+    end
+
+    def enable_multipart_post_gem
+      require 'net/http/post/multipart'
+      require File.expand_path('../../support/buffered_upload_io', __FILE__)
+      @use_multipart_post_gem = true
+    end
+
+    def disable_multipart_post_gem
+      @use_multipart_post_gem = false
     end
 
     # @private
@@ -117,31 +128,8 @@ module Scribd
       fields['api_sig'] = sign(sign_fields)
       debug("** POST parameters: #{fields.inspect}")
 
-      # Create the connection
-      http = Net::HTTP.new(HOST, PORT)
-      # TODO configure timeouts through the properties
+      res = send_request_to_scribd(fields)
 
-      # API methods can be SLOW.  Make sure this is set to something big to prevent spurious timeouts
-      http.read_timeout = 15*60
-
-      request = Net::HTTP::Post.new(REQUEST_PATH)
-      request.multipart_params = fields
-
-      tries = TRIES
-      begin
-        tries -= 1
-        res = http.request(request)
-      rescue Exception
-        $stderr.puts "Request encountered error, will retry #{tries} more."
-        if tries > 0
-          # Retrying several times with sleeps is recommended.
-          # This will prevent temporary downtimes at Scribd from breaking API applications
-          sleep(20)
-          retry
-        end
-        raise $!
-      end
-      
       debug "** Response:"
       debug(res.body)
       debug "** End response"
@@ -169,6 +157,56 @@ module Scribd
     end
 
     private 
+
+    def send_request_to_scribd(fields)
+      # Create the connection
+      http = Net::HTTP.new(HOST, PORT)
+      # TODO configure timeouts through the properties
+
+      # API methods can be SLOW.  Make sure this is set to something big to prevent spurious timeouts
+      http.read_timeout = 15*60
+
+      request = request_using_multipart_post_gem(fields) || request_using_supplied_multipart_post(fields)
+
+      tries = TRIES
+      begin
+        tries -= 1
+        res = http.request(request)
+      rescue Exception
+        $stderr.puts "Request encountered error, will retry #{tries} more."
+        if tries > 0
+          # Retrying several times with sleeps is recommended.
+          # This will prevent temporary downtimes at Scribd from breaking API applications
+          sleep(20)
+          retry
+        end
+        raise $!
+      end
+
+    ensure
+      http.finish if http && http.started?
+    end
+
+    def request_using_supplied_multipart_post(fields)
+      request = Net::HTTP::Post.new(REQUEST_PATH)
+      request.multipart_params = fields
+      request
+    end
+
+    def request_using_multipart_post_gem(fields)
+      return nil unless @use_multipart_post_gem
+
+      fields = fields.dup
+      original_file_value = fields['file']
+      if original_file_value
+        filename = File.basename(original_file_value.path)
+        mime_types = MIME::Types.of(filename)
+        mime_type = mime_types.empty? ? "application/octet-stream" : mime_types.first.content_type
+
+        fields['file'] = BufferedUploadIO.new(original_file_value, mime_type, filename)
+      end
+      Net::HTTP::Post::Multipart.new(REQUEST_PATH, fields)
+    end
 
     # FIXME: Since we don't need XMLRPC, the exception could be different
     # TODO: It would probably be better if we wrapped the fault
@@ -228,4 +266,5 @@ module Scribd
       $stderr.puts(str) if @debug
     end
   end
+
 end

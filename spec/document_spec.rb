@@ -66,6 +66,7 @@ describe Scribd::Document do
       @response = mock('Net::HTTPResponse @response')
       @response.stub!(:body).and_return "<rsp stat='ok'></rsp>"
       @http.stub!(:request).and_return(@response)
+      @http.stub!(:started?).and_return(false)
       Net::HTTP.stub!(:new).and_return(@http)
     end
     
