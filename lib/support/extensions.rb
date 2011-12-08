@@ -1,11 +1,4 @@
 # @private
-class Symbol
-  def to_proc
-    Proc.new { |*args| args.shift.__send__(self, *args) }
-  end unless method_defined?(:to_proc)
-end
-
-# @private
 class Hash
    # Taken from Rails, with appreciation to DHH
    def stringify_keys
@@ -15,20 +8,19 @@ class Hash
      end
    end unless method_defined?(:stringify_keys)
    
-   def compact
-     reject { |key, val| val.nil? }
-   end
-   
    def compact!
      delete_if { |key, val| val.nil? }
    end
+   
+   def delete_keys(*keys)
+     delete_if { |key, value| keys.include? key }
+   end
+   
 end
 
 # @private
 class Array
   def to_hsh
-    h = Hash.new
-    each { |k, v| h[k] = v }
-    h
+    inject({}) { |hash, (key, value)| hash[key] = value; hash }
   end
 end

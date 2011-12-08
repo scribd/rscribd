@@ -1,23 +1,18 @@
 # Example 1 - Uploading a test text file and removing it afterwards.
-
 require 'rubygems'
 require 'rscribd'
 
 # Use your API key / secret here
-api_key = ''
-api_secret = ''
- 
-# Create a scribd object
-Scribd::API.instance.key = api_key
-Scribd::API.instance.secret = api_secret
-#Scribd::API.instance.debug = true
+Scribd::API.key = ""
+Scribd::API.secret = ""
 
 begin
-  Scribd::User.login 'LOGIN', 'PASSWORD'
+  Scribd::User.login "USERNAME", "PASSWORD"
+  
   # Upload the document from a file
   print "Uploading a document ... "
 
-  doc = Scribd::Document.upload(:file => 'test.txt')
+  doc = Scribd::Document.upload :file => File.join(File.dirname(__FILE__), 'test.txt')
   puts "Done doc_id=#{doc.id}, doc_access_key=#{doc.access_key}"
 
   # Poll API until conversion is complete
@@ -41,6 +36,7 @@ begin
   # Delete the uploaded document
   print "Deleting a document ... "
   doc.destroy
+  
   puts "Done doc_id=#{doc.id}"
 rescue Scribd::ResponseError => e
   puts "failed code=#{e.code} error='#{e.message}'"
