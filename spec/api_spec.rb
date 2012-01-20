@@ -1,127 +1,123 @@
 require 'spec_helper'
 
 describe Scribd::API do
-  it "should be a singleton" do
-    Scribd::API.instance.should be_kind_of(Scribd::API)
-    lambda { Scribd::API.new }.should raise_error(NoMethodError)
+  describe "an instance" do
+    subject { Scribd::API }
+    
+    it { should_not respond_to(:new) }
+    its(:user) { should_not be_nil }
   end
   
-  describe "with the API key and secret in ENV" do
-    before :each do
+  context "with the API key and secret in ENV" do
+    before do
       ENV['SCRIBD_API_KEY'] = 'env key'
       ENV['SCRIBD_API_SECRET'] = 'env sec'
-      @api = Scribd::API.send(:new)
     end
     
-    it "should set the API key and secret accordingly" do
-      @api.key.should eql('env key')
-      @api.secret.should eql('env sec')
-    end
+    subject { Scribd::API.reload }
     
-    it "should favor local API key and secret settings" do
-      @api.key = 'test key'
-      @api.secret = 'test sec'
-      @api.key.should eql('test key')
-      @api.secret.should eql('test sec')
+    its(:key) { should == 'env key' }
+    its(:secret) { should == 'env sec' }
+    
+    context "but the API key and secret locally set" do
+      before do
+        subject.key = 'test key'
+        subject.secret = 'test sec'
+      end
+      
+      its(:key) { should == 'test key' }
+      its(:secret) { should == 'test sec' }
     end
   end
   
-  describe "freshly reset" do
-    before :each do
+  context "without the API key and secret in ENV" do
+    before do
       ENV['SCRIBD_API_KEY'] = nil
       ENV['SCRIBD_API_SECRET'] = nil
-      # reset the singleton; total hack
-      @api = Scribd::API.send(:new)
     end
     
-    it "should raise NotReadyError when send_request is called" do
-      lambda { @api.send_request('blah', {}) }.should raise_error(Scribd::NotReadyError)
+    subject { Scribd::API.reload }
+    
+    it { expect { subject.request 'blah' }.to raise_error(Scribd::NotReadyError) }
+    
+    context "with a key and secret locally set" do
+      before { subject.key, subject.secret = 'test key', 'test sec' }
+      
+      its(:key) { should == 'test key' }
+      its(:secret) { should == 'test sec' }
+      
+      it { expect { subject.request nil }.to raise_error(ArgumentError) }
+      it { expect { subject.request '' }.to raise_error(ArgumentError) }
+    end
+  end
+  
+  describe "#request" do
+    before do
+      @api = Scribd::API
+      @api.key, @api.secret = 'test key', 'test sec'
     end
     
-    describe "with a key and secret set" do
-      before :each do
-        @api.key = 'test key'
-        @api.secret = 'test sec'
+    context "when the request has parameters" do
+      before do
+        stub_request(:post, "http://api.scribd.com/api")
+               .with(:body => "field1=1&field2=hi&method=test&api_key=test%20key&api_sig=cd1a695a72a9f090e47af0f3272f970c")
+          .to_return(:body => "<rsp stat='ok' />")
       end
       
-      it "should have the correct API key and secret" do
-        @api.key.should eql('test key')
-        @api.secret.should eql('test sec')
+      subject { @api.request('test', { :field1 => 1, :field2 => 'hi' }) }
+      
+      it { should be_kind_of Nokogiri::XML::Document }
+    end
+    
+    context "when the response doesn't have an rsp tag as its root" do
+      before do
+        stub_request(:post, "http://api.scribd.com/api")
+               .with(:body => "method=test&api_key=test%20key&api_sig=eb4a6e58e8cae5d4ac7eee812e4108fc")
+          .to_return(:body => "<invalid/>")
       end
       
-      it "should raise ArgumentError if the method is empty" do
-        lambda { @api.send_request(nil, {}) }.should raise_error(ArgumentError)
-        lambda { @api.send_request('', {}) }.should raise_error(ArgumentError)
+      subject { @api.request('test') }
+      
+      it { expect { subject }.to raise_error(Scribd::MalformedResponseError) }
+    end
+    
+    context "when the response is an error response" do
+      before do
+        stub_request(:post, "http://api.scribd.com/api")
+               .with(:body => "method=testmeth&api_key=test%20key&api_sig=35568d601d61bbcc15816ae423bc7587")
+          .to_return(:body => "<rsp stat='fail'><error code='123' message='testmsg' /></rsp>")
       end
       
-      describe "with a mocked Net::HTTP" do
-        before :each do
-          @response = mock('Net::HTTP::Response @response')
-          @response.stub!(:body).and_return("<rsp stat='ok'/>")
-          
-          @http = Net::HTTP.new('http://www.example.com', 80)
-          @http.stub!(:request).and_return(@response)
-          Net::HTTP.stub!(:new).and_return(@http)
-          
-          @request = Net::HTTP::Post.new('/test')
-          Net::HTTP::Post.stub!(:new).and_return(@request)
-        end
-        
-        it "should set a nice, long read timeout" do
-          @api.send_request('test', {})
-          @http.read_timeout.should >= 60
-        end
-        
-        it "should set the multipart parameters to the given fields" do
-          fields = { :field1 => 1, :field2 => 'hi' }
-          @api.send_request('test', fields)
-          body = @request.body
-          fields.each do |key, value|
-            serial_str = <<-EOF
-Content-Disposition: form-data; name=#{key.to_s.inspect}
-
-#{value.to_s}
-            EOF
-            body.should include(serial_str.gsub(/\n/, "\r\n"))
-          end
-        end
-        
-        # it "should attempt to make the request 3 times" do
-        #   @http.stub!(:request).and_raise Exception
-        #   @http.should_receive(:request).exactly(3).times
-        #   lambda { @api.send_request('test', {}) }.should raise_error
-        # end
-        
-        it "should raise MalformedResponseError if the response doesn't have an rsp tag as its root" do
-          @response.stub!(:body).and_return("<invalid/>")
-          lambda { @api.send_request('test', {}) }.should raise_error(Scribd::MalformedResponseError)
-        end
-        
-        it "should raise a ResponseError for error responses" do
-          @response.stub!(:body).and_return("<rsp stat='fail'><error code='123' message='testmsg' /></rsp>")
-          lambda { @api.send_request('testmeth', {}) }.should raise_error(Scribd::ResponseError) { |error|
-            error.code.should eql("123")
-            error.message.should eql('Method: testmeth Response: code=123 message=testmsg')
-          }
-        end
-        
-        it "should return the REXML doc for successful responses" do
-          @response.stub!(:body).and_return("<rsp stat='ok'><element attr='val'><otherelem>val2</otherelem></element></rsp>")
-          @api.send_request('testmeth', {}).should be_kind_of(REXML::Document)
-        end
+      subject { @api.request('testmeth') }
+      
+      it { expect { subject }.to raise_error(Scribd::ResponseError) { |error|
+        error.code.should == "123"
+        error.message.should == 'Method: testmeth Response: code=123 message=testmsg'
+      } }
+    end
+    
+    context "when an exception occurs" do      
+      subject { @api.request('test') }
+      
+      it "should retry 3 times" do
+        Scribd::Request::Connection.should_receive(:http_post).exactly(3).times.and_raise(Exception)
+        Kernel.should_receive(:sleep).with(20).exactly(2).times.and_return(true)
+        expect { subject }.to raise_error(Exception)
       end
     end
-  end
-  
-  it "should not be asynchronous by default" do
-    Scribd::API.instance.asynchronous.should_not be_true
-  end
-  
-  it "should not be in debug mode by default" do
-    Scribd::API.instance.instance_variable_get(:@debug).should_not be_true
-  end
-  
-  it "should have a user by default" do
-    Scribd::API.instance.user.should_not be_nil
+    
+    context "when using a my_user_id" do
+      before do
+        Scribd::API.user = "my_user_id"
+        
+        stub_request(:post, "http://api.scribd.com/api").
+                with(:body => "method=test&api_key=test%20key&my_user_id=my_user_id&api_sig=42320d29adcdd8a240729ec6e5363c41").
+           to_return(:body => "<rsp stat='ok' />")
+      end
+      
+      subject { @api.request('test') }
+      
+      it { should be_kind_of Nokogiri::XML::Document }
+    end
   end
 end

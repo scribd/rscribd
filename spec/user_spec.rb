@@ -1,215 +1,198 @@
 require 'spec_helper'
 
 describe Scribd::User do
+  before do
+    Scribd::API.key = "test key"
+    Scribd::API.secret = "secret"
+  end
+  
+  let(:user) { Scribd::User.new(:xml => Nokogiri::XML("<rsp stat='ok'><user_id type='integer'>225</user_id><username>sancho</username><name>Sancho Sample</name><session_key>some key</session_key></rsp>").root) }
+  
   describe "initialized from attributes" do
-    before :each do
-      @user = Scribd::User.new(:username => 'sancho', :name => 'Sancho Sample')
-    end
+    subject { Scribd::User.new(:username => 'sancho', :name => 'Sancho Sample') }
     
-    it "should have its attributes set appropriately" do
-      @user.username.should eql('sancho')
-      @user.name.should eql('Sancho Sample')
-    end
+    it { should_not be_saved }
+    it { should_not be_created }
     
-    it "should be unsaved" do
-      @user.should_not be_saved
-    end
-    
-    it "should be uncreated" do
-      @user.should_not be_created
-    end
+    its(:username) { should == 'sancho' }
+    its(:name) { should == 'Sancho Sample' }
   end
   
   describe "initialized from XML" do
-    before :each do
-      @user = Scribd::User.new(:xml => REXML::Document.new("<rsp stat='ok'><username>sancho</username><name>Sancho Sample</name></rsp>").root)
-    end
+    subject { user }
     
-    it "should have its attributes set appropriately" do
-      @user.username.should eql('sancho')
-      @user.name.should eql('Sancho Sample')
-    end
+    it { should be_saved }
+    it { should be_created }
     
-    it "should be saved" do
-      @user.should be_saved
-    end
-    
-    it "should be created" do
-      @user.should be_created
-    end
+    its(:username) { should == 'sancho' }
+    its(:name) { should == 'Sancho Sample' }
+    its(:id) { should == 225 }
+    its(:to_s) { should == 'sancho' }
   end
   
-  describe "existing user" do
-    before :each do
-      @user = Scribd::User.new(:xml => REXML::Document.new("<rsp stat='ok'><user_id type='integer'>225</user_id><username>sancho</username><name>Sancho Sample</name><session_key>some key</session_key></rsp>").root)
-    end
+  describe "#save" do
+    it { expect { user.save }.to raise_error(NotImplementedError) }
+  end
     
-    it "should return the user_id for the id method" do
-      @user.id.should eql(225)
-    end
+  describe "#documents" do
+    let(:xml) { "<rsp stat='ok'><resultset><result><doc_id type='integer'>123</doc_id></result><result><doc_id type='integer'>234</doc_id></result></resultset></rsp>" }
     
-    it "should return the username for the to_s method" do
-      @user.to_s.should eql(@user.username)
-    end
-    
-    it "should not be saveable" do
-      lambda { @user.save }.should raise_error(NotImplementedError)
-    end
-    
-    describe "documents method" do
-      before :each do
-        @xml = REXML::Document.new("<rsp stat='ok'><resultset><result><doc_id type='integer'>123</doc_id></result><result><doc_id type='integer'>234</doc_id></result></resultset></rsp>")
+    context "without options" do
+      subject { user.documents }
+      
+      before do
+        stub_request(:post, "http://api.scribd.com/api").
+                with(:body => "method=docs.getList&api_key=test%20key&api_sig=72f496fa692a4d4b5090caf745b2a111").
+           to_return(:body => xml)
       end
       
-      it "should docs.getList with the session key" do
-        Scribd::API.instance.should_receive(:send_request).once.with('docs.getList', { :session_key => 'some key' }).and_return(@xml)
-        @user.documents
-      end
-
-      it "should docs.getList with an offset" do
-        Scribd::API.instance.should_receive(:send_request).once.with('docs.getList', { :session_key => 'some key', :offset => 1 }).and_return(@xml)
-        @user.documents(:offset => 1)
-      end
-
-      it "should docs.getList with a limit" do
-        Scribd::API.instance.should_receive(:send_request).once.with('docs.getList', { :session_key => 'some key', :limit => 1 }).and_return(@xml)
-        @user.documents(:limit => 1)
+      it { should be_kind_of(Array) }
+      it { should have(2).items }
+      
+      its("first") { should be_kind_of Scribd::Document }
+      its("first.id") { should == 123 }
+      its("first.owner") { should == user }
+      
+      its("last") { should be_kind_of Scribd::Document }
+      its("last.id") { should == 234 }
+      its("last.owner") { should == user }
+    end
+    
+    context "with an offset" do
+      subject { user.documents(:offset => 1) }
+      
+      before do
+        stub_request(:post, "http://api.scribd.com/api").
+                with(:body => "offset=1&method=docs.getList&api_key=test%20key&api_sig=f95806581efa936d5a20dae819e1c801").
+           to_return(:body => xml)
       end
       
-      it "should return an array of received documents with the owner of each set to this user" do
-        Scribd::API.instance.stub!(:send_request).and_return(@xml)
-        docs = @user.documents
-        docs.should be_kind_of(Array)
-        docs.should have(2).items
-        docs.first.id.should eql(123)
-        docs.last.id.should eql(234)
-        docs.each do |doc|
-          doc.should be_kind_of(Scribd::Document)
-          doc.owner.should eql(@user)
+      it { should be_kind_of Array }
+    end
+    
+    context "with a limit" do
+      subject { user.documents(:limit => 1) }
+      
+      before do
+        stub_request(:post, "http://api.scribd.com/api").
+                with(:body => "limit=1&method=docs.getList&api_key=test%20key&api_sig=19572674aecef045a86c298720d46ca3").
+           to_return(:body => xml)
+      end
+      
+      it { should be_kind_of Array }
+    end
+  end
+    
+  describe "#collections" do
+    let(:response) { %q{<?xml version="1.0" encoding="UTF-8"?>
+        <rsp stat="ok">
+          <resultset list="true">
+            <result>
+              <collection_id>61</collection_id>
+              <collection_name>My Collection</collection_name>
+              <doc_count>5</doc_count>
+            </result>
+            <result>
+              <collection_id>62</collection_id>
+              <collection_name>My Other Collection</collection_name>
+              <doc_count>1</doc_count>
+            </result>
+          </resultset>
+        </rsp>
+    } }
+    
+    context "when the user is new" do
+      it { expect { Scribd::User.new.collections }.should raise_error(Scribd::NotReadyError) }
+    end
+    
+    context "when the user is not new" do
+      
+      context "without options" do
+        subject { user.collections }
+        
+        before do
+          stub_request(:post, "http://api.scribd.com/api").
+                  with(:body => "method=docs.getCollections&api_key=test%20key&api_sig=b80374e875a4fbd073ef00aa31fe98c8").
+             to_return(:body => response)
         end
-      end
-    end
-    
-    describe "#collections" do
-      before :each do
-        @user = Scribd::User.new(:xml => REXML::Document.new("<rsp stat='ok'><user_id type='integer'>225</user_id><username>sancho</username><name>Sancho Sample</name><session_key>some key</session_key></rsp>").root)
-        @response = <<-EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <rsp stat="ok">
-            <resultset list="true">
-              <result>
-                <collection_id>61</collection_id>
-                <collection_name>My Collection</collection_name>
-                <doc_count>5</doc_count>
-              </result>
-              <result>
-                <collection_id>62</collection_id>
-                <collection_name>My Other Collection</collection_name>
-                <doc_count>1</doc_count>
-              </result>
-            </resultset>
-          </rsp>
-        EOF
-      end
-      
-      it "should raise NotReadyError for new users" do
-        user = Scribd::User.new
-        lambda { user.collections }.should raise_error(Scribd::NotReadyError)
-      end
-      
-      it "should call the docs.getCollections API method" do
-        Scribd::API.instance.should_receive(:send_request).once.with('docs.getCollections', :session_key => 'some key').and_return(REXML::Document.new(@response))
-        @user.collections
-      end
-      
-      it "should pass options to the API method" do
-        Scribd::API.instance.should_receive(:send_request).once.with('docs.getCollections', :session_key => 'some key', :other => 'option').and_return(REXML::Document.new(@response))
-        @user.collections(:other => 'option')
-      end
-      
-      it "should return an array of collections" do
-        Scribd::API.instance.should_receive(:send_request).once.with('docs.getCollections', an_instance_of(Hash)).and_return(REXML::Document.new(@response))
-        list = @user.collections
-        list.should be_kind_of(Array)
-        list.size.should eql(2)
         
-        list.first.should be_kind_of(Scribd::Collection)
-        list.first.collection_id.should eql('61')
-        list.first.collection_name.should eql('My Collection')
-        list.first.doc_count.should eql('5')
+        it { should be_kind_of(Array) }
+        it { should have(2).collections }
+        its("first") { should be_kind_of Scribd::Collection }
+        its("first.collection_id") { should == "61" }
+        its("first.collection_name") { should == "My Collection" }
+        its("first.doc_count") { should == "5" }
+        its("first.owner") { should == user }
         
-        list.last.should be_kind_of(Scribd::Collection)
-        list.last.collection_id.should eql('62')
-        list.last.collection_name.should eql('My Other Collection')
-        list.last.doc_count.should eql('1')
-      end
-      
-      it "should set each collection's owner" do
-        Scribd::API.instance.should_receive(:send_request).once.with('docs.getCollections', an_instance_of(Hash)).and_return(REXML::Document.new(@response))
-        list = @user.collections
-        list.each { |coll| coll.owner.should eql(@user) }
+        its("last") { should be_kind_of Scribd::Collection }
+        its("last.collection_id") { should == "62" }
+        its("last.collection_name") { should == "My Other Collection" }
+        its("last.doc_count") { should == "1" }
+        its("last.owner") { should == user }
       end
     end
     
-    describe "find_documents method" do
-      it "should call Document.find with an appropriate scope and session key" do
-        Scribd::Document.should_receive(:find).once.with(hash_including(:scope => 'user', :session_key => 'some key'))
-        @user.find_documents(:query => 'hi!')
+    context "with options" do
+      subject { user.collections(:other => 'option') }
+      before do
+        stub_request(:post, "http://api.scribd.com/api").
+                with(:body => "other=option&method=docs.getCollections&api_key=test%20key&api_sig=6c4269b137d6f6dc3e42f98ddc319c61").
+           to_return(:body => response)
       end
       
-      it "should pass all options to the Document.find method" do
-        Scribd::Document.should_receive(:find).once.with(hash_including(:foo => 'bar'))
-        @user.find_documents(:foo => 'bar')
-      end
-    end
-    
-    describe "find_document method" do
-      before :each do
-        @xml = REXML::Document.new("<rsp stat='ok'><doc_id type='integer'>123</doc_id></rsp>")
-      end
-      
-      it "should call docs.getSettings with the appropriate doc_id and session key" do
-        Scribd::API.instance.should_receive(:send_request).once.with('docs.getSettings', { :doc_id => 123, :session_key => 'some key' }).and_return(@xml)
-        @user.find_document(123)
-      end
-      
-      it "should return an appropriate Document with the owner set" do
-        Scribd::API.instance.stub!(:send_request).and_return(@xml)
-        doc = @user.find_document(123)
-        doc.should be_kind_of(Scribd::Document)
-        doc.id.should eql(123)
-        doc.owner.should eql(@user)
-      end
-    end
-    
-    it "should have an upload method that calls Document.create" do
-      Scribd::Document.should_receive(:create).once.with(:file => 'test', :owner => @user)
-      @user.upload(:file => 'test')
+      it { should be_kind_of Array }
     end
   end
   
+  describe "#find_document" do    
+    before do
+      stub_request(:post, "http://api.scribd.com/api").
+              with(:body => "doc_id=123&method=docs.getSettings&api_key=test%20key&api_sig=e4e72e702eddf41aad250a38df576195").
+         to_return(:body => "<rsp stat='ok'><doc_id type='integer'>123</doc_id></rsp>")
+    end
+    
+    subject { user.find_document(123) }
+    
+    it { should be_kind_of(Scribd::Document) }
+    its(:id) { should == 123 }
+    its(:owner) { should == user }
+  end
+  
+  describe "#find_documents" do
+    it "should pass all options to the Document.find method" do
+      Scribd::Document.should_receive(:find).once.with(hash_including(:foo => 'bar', :scope => 'user', :session_key => 'some key'))
+      user.find_documents(:foo => 'bar')
+    end
+  end
+  
+  describe "#upload" do
+    it "should have an upload method that calls Document.create" do
+      Scribd::Document.should_receive(:create).once.with(:file => 'test', :owner => user)
+      user.upload(:file => 'test')
+    end
+  end
+    
   describe "new user" do
-    before :each do
+    before do
       @user = Scribd::User.new(:login => 'sancho', :name => 'Sancho Sample')
-      @xml = REXML::Document.new("<rsp stat='ok'><newattr>newval</newattr></rsp>")
     end
     
     describe "save method" do
-      it "should call user.signup with the user's attributes" do
-        Scribd::API.instance.should_receive(:send_request).once.with('user.signup', { :login => 'sancho', :name => 'Sancho Sample' }).and_return(@xml)
-        @user.save
+      before do
+        stub_request(:post, "http://api.scribd.com/api").
+                with(:body => "login=sancho&name=Sancho%20Sample&method=user.signup&api_key=test%20key&api_sig=61f9beeea4be3a263b0793d7df570393").
+           to_return(:body => "<rsp stat='ok'><newattr>newval</newattr></rsp>")
       end
       
+      subject { @user.save }
+      
       it "should set any new attributes in the response" do
-        Scribd::API.instance.stub!(:send_request).and_return(@xml)
-        @user.save
-        @user.newattr.should eql('newval')
+        subject.newattr.should eql('newval')
       end
       
       it "should set the API user to this user" do
-        Scribd::API.instance.stub!(:send_request).and_return(@xml)
-        @user.save
-        Scribd::API.instance.user.should eql(@user)
+        subject
+        Scribd::API.user.should eql(@user)
       end
     end
     
@@ -227,53 +210,52 @@ describe Scribd::User do
   end
   
   describe "#auto_sign_in_url" do
-    before :each do
-      @response = REXML::Document.new('<rsp><url><![CDATA[hello]]></url></rsp>').root
+    let(:response) { '<rsp><url><![CDATA[hello]]></url></rsp>' }
+    let(:user) { Scribd::User.new(:xml => Nokogiri::XML("<rsp stat='ok'><user_id type='integer'>225</user_id><username>sancho</username><name>Sancho Sample</name><session_key>some key</session_key></rsp>").root) }
+    
+    context "when the user isn't saved" do
+      subject { Scribd::User.new.auto_sign_in_url }
+      it { expect { subject }.to raise_error(Scribd::NotReadyError) }
     end
     
-    subject { Scribd::User.new(:xml => REXML::Document.new("<rsp stat='ok'><user_id type='integer'>225</user_id><username>sancho</username><name>Sancho Sample</name><session_key>some key</session_key></rsp>").root) }
-    
-    it "should raise NotReadyError if the user isn't saved" do
-      lambda { Scribd::User.new.auto_sign_in_url }.should raise_error(Scribd::NotReadyError)
-    end
-    
-    it "should call the API method user.getAutoSignInUrl" do
-      Scribd::API.instance.should_receive(:send_request).once.with('user.getAutoSignInUrl', :session_key => 'some key', :next_url => 'foobar').and_return(@response)
-      subject.auto_sign_in_url('foobar')
-    end
-    
-    it "should set next_url to a blank string by default" do
-      Scribd::API.instance.should_receive(:send_request).once.with('user.getAutoSignInUrl', :session_key => 'some key', :next_url => '').and_return(@response)
-      subject.auto_sign_in_url
-    end
-    
-    it "should return the URL returned by the API" do
-      Scribd::API.instance.stub!(:send_request).and_return(@response)
-      subject.auto_sign_in_url.should eql('hello')
+    context "when the user is saved" do
+      context "with next_url" do
+        before do
+          stub_request(:post, "http://api.scribd.com/api").
+                  with(:body => "next_url=foobar&method=user.getAutoSignInUrl&api_key=test%20key&api_sig=ff2b5d8b98b75538518d905677e5d986").
+             to_return(:body => response)
+        end
+        subject { user.auto_sign_in_url('foobar') }
+        it { should == "hello" }
+      end
+      
+      context "without next_url" do
+        before do
+          stub_request(:post, "http://api.scribd.com/api").
+                  with(:body => "next_url=&method=user.getAutoSignInUrl&api_key=test%20key&api_sig=349f2e281cf1cc8febdda4693ddc4382").
+             to_return(:body => response)
+        end
+        subject { user.auto_sign_in_url }
+        it { should == "hello" }
+      end
     end
   end
   
-  describe ".username" do
-    before :each do
-      @xml = REXML::Document.new("<rsp stat='ok'><username>sancho</username><name>Sancho Sample</name></rsp>")
+  describe ".login" do    
+    before do
+      stub_request(:post, "http://api.scribd.com/api").
+              with(:body => "username=user&password=pass&method=user.login&api_key=test%20key&api_sig=59ae4c057f37da654198a80eb2488c7a").
+         to_return(:body => "<rsp stat='ok'><username>sancho</username><name>Sancho Sample</name></rsp>")
     end
     
-    it "should call user.username with the username and password" do
-      Scribd::API.instance.should_receive(:send_request).once.with('user.login', { :username => 'user', :password => 'pass' }).and_return(@xml)
-      Scribd::User.login 'user', 'pass'
-    end
+    subject { Scribd::User.login 'user', 'pass' }
     
-    it "should create a new user from the resulting XML" do
-      Scribd::API.instance.stub!(:send_request).and_return(@xml)
-      user = Scribd::User.login('user', 'pass')
-      user.username.should eql('sancho')
-      user.name.should eql('Sancho Sample')
-    end
-    
-    it "should set the API user" do
-      Scribd::API.instance.stub!(:send_request).and_return(@xml)
-      user = Scribd::User.login('user', 'pass')
-      Scribd::API.instance.user.should eql(user)
+    its(:username) { should == "sancho" }
+    its(:name) { should == "Sancho Sample" }
+
+    it "should change the API user" do
+      subject
+      Scribd::API.user.should == subject
     end
   end
 end

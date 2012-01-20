@@ -36,102 +36,69 @@ RESULT = Proc.new { |categories|
 }
 
 describe Scribd::Category do
-  subject { Scribd::Category.new(:xml => REXML::Document.new(CATEGORY_TAG.call(nil, CATEGORY.call('12', 'test'))).root) }
+  before do
+    Scribd::API.key = "test key"
+    Scribd::API.secret = "secret"
+  end
   
   describe "#initialize" do
-    it "should raise an error if initialized without XML" do
-      lambda { Scribd::Category.new :name => 'foo' }.should raise_error
+    context "without XML" do
+      subject { Scribd::Category.new :name => 'foo' }
+      it { expect { subject }.should raise_error }
     end
     
-    context "attributes" do
+    context "with XML" do
+      let(:response) { CATEGORY_TAG.call(nil, CATEGORY.call('12', 'test')) }
+      subject { Scribd::Category.new(:xml => Nokogiri::XML(response).root) }
+      it { should be_saved }
+      it { should be_created }
+      
       its(:scribd_id) { should eql('12') }
       its(:name) { should eql('test') }
     end
     
-    it "should populate children that link back to their parents" do
-      response = CATEGORY_TAG.call(nil, CATEGORY.call(nil, nil, CATEGORY_TAG.call('subcategory', CATEGORY.call('100'))))
-      
-      category = Scribd::Category.new(:xml => REXML::Document.new(response).root)
-      Scribd::API.instance.should_not_receive(:send_request) # not really being tested here, but we should make sure we don't actually make remote requests
-      category.children.should be_kind_of(Array)
-      category.children.first.should be_kind_of(Scribd::Category)
-      category.children.first.scribd_id.should eql('100')
-      category.children.first.name.should eql('Test Category 100')
-      category.children.first.children_preloaded?.should be_false
-      category.children.first.parent.should eql(category)
-    end
-    
-    it { should be_saved }
-    it { should be_created }
-  end
-  
-  describe "#children_preloaded?" do
-    it "should be true for categories initialized with children" do
-      response = CATEGORY_TAG.call(nil, CATEGORY.call(nil, nil, CATEGORY_TAG.call('subcategory')))
-      Scribd::Category.new(:xml => REXML::Document.new(response).root).children_preloaded?.should be_true
-    end
-    
-    it "should be false for categories initialized without children" do
-      Scribd::Category.new(:xml => REXML::Document.new(CATEGORY_TAG.call).root).children_preloaded?.should be_false
+    context "with XML and nodes" do
+      let(:response) { CATEGORY_TAG.call(nil, CATEGORY.call(nil, nil, CATEGORY_TAG.call('subcategory', CATEGORY.call('100')))) }
+      subject { Scribd::Category.new(:xml => Nokogiri::XML(response).root) }
+      before { Scribd::API.should_not_receive(:post) }
+
+      its(:children) { should be_kind_of(Array) }
+      its("children.first") { should be_kind_of(Scribd::Category) }
+      its("children.first.scribd_id") { should == '100' }
+      its("children.first.name") { should == 'Test Category 100' }
+      its("children.first.parent") { should == subject }
     end
   end
-  
-  describe :all do
-    before :each do
-      @response = REXML::Document.new(RESULT.call(CATEGORY_TAG.call)).root
-    end
     
-    it "should send an API request to docs.getCategories" do
-      Scribd::API.instance.should_receive(:send_request).once.with('docs.getCategories').and_return(@response)
-      Scribd::Category.all
-    end
-    
-    it "should set with_subcategories if include_children is true" do
-      Scribd::API.instance.should_receive(:send_request).once.with('docs.getCategories', :with_subcategories => true).and_return(@response)
-      Scribd::Category.all(true)
-    end
-    
-    it "should return an array of categories" do
-      Scribd::API.instance.stub!(:send_request).and_return(@response)
-      categories = Scribd::Category.all
-      categories.should be_kind_of(Array)
-      categories.first.should be_kind_of(Scribd::Category)
-      categories.last.should be_kind_of(Scribd::Category)
-    end
-  end
-  
   describe "#children" do
-    before :each do
-      xml = REXML::Document.new(CATEGORY_TAG.call(nil, CATEGORY.call(nil, nil, CATEGORY_TAG.call('subcategory')))).root
-      @preloaded = Scribd::Category.new(:xml => xml)
+    context "when the category has preloaded children" do
+      let(:preloaded) { Scribd::Category.new(:xml => Nokogiri::XML(CATEGORY_TAG.call(nil, CATEGORY.call(nil, nil, CATEGORY_TAG.call('subcategory')))).root) }
       
-      xml = REXML::Document.new(CATEGORY_TAG.call(nil, CATEGORY.call('3'))).root
-      @not_preloaded = Scribd::Category.new(:xml => xml)
+      before { Scribd::API.should_not_receive(:post) }
       
-      @response = REXML::Document.new(RESULT.call(CATEGORY_TAG.call)).root
+      subject { preloaded.children }
+      
+      it { should be_kind_of Array }
     end
-    
-    it "should not make a network call if the category has preloaded children" do
-      Scribd::API.instance.should_not_receive(:send_request)
-      @preloaded.children
-    end
-    
-    it "should otherwise make an API call to docs.getCategories" do
-      Scribd::API.instance.should_receive(:send_request).once.with('docs.getCategories', :category_id => '3').and_return(@response)
-      @not_preloaded.children
-    end
-    
-    it "should return an array of child categories" do
-      Scribd::API.instance.stub!(:send_request).and_return(@response)
-      cats = @not_preloaded.children
-      cats.should be_kind_of(Array)
-      cats.first.should be_kind_of(Scribd::Category)
+
+    context "when the category has not preloaded children" do
+      let(:not_preloaded) { Scribd::Category.new(:xml => Nokogiri::XML(CATEGORY_TAG.call(nil, CATEGORY.call('3'))).root) }
+      let(:response) { RESULT.call(CATEGORY_TAG.call) }
+      
+      before do
+        stub_request(:post, "http://api.scribd.com/api")
+               .with(:body => "category_id=3&method=docs.getCategories&api_key=test%20key&api_sig=3778cbd34ef01a487a78a941344ee35a")
+          .to_return(:body => response)
+      end
+
+      subject { not_preloaded.children }
+
+      it { should be_kind_of Array }
     end
   end
   
   describe "#browse" do
-    before :each do
-      @response = REXML::Document.new(<<-EOF
+    let(:response) { <<-EOF
         <?xml version="1.0" encoding="UTF-8"?>
         <rsp stat="ok">
           <result_set totalResultsAvailable="922" totalResultsReturned="2" firstResultPosition="1" list="true">
@@ -154,26 +121,64 @@ describe Scribd::Category do
           </result_set>
         </rsp>
       EOF
-      ).root
-    end
+    }
     
-    it "should make an API call to docs.browse" do
-      Scribd::API.instance.should_receive(:send_request).once.with('docs.browse', :category_id => '12').and_return(@response)
-      subject.browse
-    end
+    let(:category) { Scribd::Category.new(:xml => Nokogiri::XML(CATEGORY_TAG.call(nil, CATEGORY.call('12', 'test'))).root) }
     
-    it "should pass options to the API call" do
-      Scribd::API.instance.should_receive(:send_request).once.with('docs.browse', :category_id => '12', :foo => 'bar').and_return(@response)
-      subject.browse(:foo => 'bar')
-    end
-    
-    it "should return an array of Documents" do
-      Scribd::API.instance.stub!(:send_request).and_return(@response)
-      docs = subject.browse
-      docs.should be_kind_of(Array)
-      docs.each do |doc|
-        doc.should be_kind_of(Scribd::Document)
+    context "without options" do
+      before do
+        stub_request(:post, "http://api.scribd.com/api")
+               .with(:body => "category_id=12&method=docs.browse&api_key=test%20key&api_sig=45d29e5f044b89e8db56d0589303601b")
+          .to_return(:body => response)
       end
+      
+      subject { category.browse }
+      it { should be_kind_of Array }
+      its(:first) { should be_kind_of Scribd::Document }
+    end
+    
+    context "with options" do
+      before do
+        stub_request(:post, "http://api.scribd.com/api")
+               .with(:body => "foo=bar&category_id=12&method=docs.browse&api_key=test%20key&api_sig=4d0bbad2c9eb8e1bc0baaa1c699372e9")
+          .to_return(:body => response)
+      end
+      
+      subject { category.browse(:foo => 'bar') }
+      it { should be_kind_of Array }
+      its(:first) { should be_kind_of Scribd::Document }
+    end
+  end
+  
+  describe ".all" do
+    let(:response) { RESULT.call(CATEGORY_TAG.call) }
+    
+    context "without parameters" do
+      before do
+        stub_request(:post, "http://api.scribd.com/api")
+               .with(:body => "method=docs.getCategories&api_key=test%20key&api_sig=0963d1c1cf07ae8d747afaa67b73e968")
+          .to_return(:body => response)
+      end
+      
+      subject { Scribd::Category.all }
+      
+      it { should be_kind_of Array }
+      it { should have(1).category }
+      its(:first) { should be_kind_of Scribd::Category }
+    end
+    
+    context "with parameter all" do
+      before do
+        stub_request(:post, "http://api.scribd.com/api")
+               .with(:body => "with_subcategories=true&method=docs.getCategories&api_key=test%20key&api_sig=7927bc08fef611bd6ffab5847abbd598")
+          .to_return(:body => response)
+      end
+      
+      subject { Scribd::Category.all true }
+      
+      it { should be_kind_of Array }
+      it { should have(1).category }
+      its(:first) { should be_kind_of Scribd::Category }
     end
   end
 end

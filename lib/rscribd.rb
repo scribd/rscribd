@@ -1,17 +1,20 @@
-#!/usr/bin/env ruby
+require 'open-uri'
+require 'tempfile'
+require 'digest/md5'
+require 'nokogiri'
+require 'curb'
 
-# Container module for all classes in the RScribd gem.
+$LOAD_PATH.unshift File.dirname(__FILE__)
 
-module Scribd
-end
+require "scribd/request"
+require "support/extensions"
+require "scribd/errors"
+require "scribd/resource"
+require "scribd/user"
+require "scribd/api"
+require "scribd/category"
+require "scribd/collection"
+require "scribd/document"
+require "scribd/security"
 
-require 'support/extensions'
-require 'support/multipart_hack'
-require 'scribd/errors'
-require 'scribd/api'
-require 'scribd/resource'
-require 'scribd/category'
-require 'scribd/collection'
-require 'scribd/document'
-require 'scribd/user'
-require 'scribd/security'
+Scribd::API.reload

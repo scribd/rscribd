@@ -1,31 +1,16 @@
 require 'spec_helper'
 
 describe Symbol do
-  it "should define a to_proc method" do
-    Symbol.instance_methods.map { |meth| meth.to_sym }.should include(:to_proc)
-  end
-  
-  it "... that returns a Proc" do
-    :to_s.to_proc.should be_kind_of(Proc)
-  end
+  subject { :symbol }
+  its(:to_proc) { should be_kind_of(Proc) }
 end
 
 describe Hash do
-  it "should define a stringify_keys method" do
-    Hash.instance_methods.map(&:to_sym).should include(:stringify_keys)
-  end
-  
-  it "... that converts hash keys into strings" do
-    { :a => :b, 1 => 3 }.stringify_keys.should == { 'a' => :b, '1' => 3 }
-  end
+  subject { { :a => :b, 1 => 3 } }
+  its(:stringify_keys) { should == { 'a' => :b, '1' => 3 } }
 end
 
 describe Array do
-  it "should define a to_hsh method" do
-    Array.instance_methods.map(&:to_sym).should include(:to_hsh)
-  end
-  
-  it "... that converts nested arrays into a hash" do
-    [ [ 1, 2], [3, 4] ].to_hsh.should == { 1 => 2, 3 => 4 }
-  end
+  subject { [ [ 1, 2], [3, 4] ] }
+  its(:to_hsh) { should == { 1 => 2, 3 => 4 } }
 end
