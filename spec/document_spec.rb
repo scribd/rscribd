@@ -144,6 +144,13 @@ describe Scribd::Document do
       Scribd::API.instance.should_receive(:send_request).any_number_of_times
       @document.save
     end
+
+    it "should recognize URLs with square brackets" do
+      @document.file = 'http://www.example.com/file[].txt'
+      Scribd::API.instance.should_receive(:send_request).with('docs.uploadFromUrl', hash_including(:url => 'http://www.example.com/file%5B%5D.txt'))
+      Scribd::API.instance.should_receive(:send_request).any_number_of_times
+      @document.save
+    end
   end
   
   describe "to be uploaded" do
@@ -335,6 +342,15 @@ describe Scribd::Document do
             end
 
             it "should open a stream for the URL and pass it to docs.uploadThumb" do
+              stream_mock = mock('open-uri stream', :close => nil)
+              @document.should_receive(:open).once.with(an_instance_of(URI::HTTP)).and_return(stream_mock)
+              Scribd::API.instance.should_receive(:send_request).once.with('docs.uploadThumb', :file => stream_mock, :doc_id => 3)
+              Scribd::API.instance.should_receive(:send_request).any_number_of_times
+              @document.save
+            end
+
+            it "should recognize URLs with square brackets" do
+              @document.thumbnail = "http://www.scribd.com/favicon[].ico"
               stream_mock = mock('open-uri stream', :close => nil)
               @document.should_receive(:open).once.with(an_instance_of(URI::HTTP)).and_return(stream_mock)
               Scribd::API.instance.should_receive(:send_request).once.with('docs.uploadThumb', :file => stream_mock, :doc_id => 3)

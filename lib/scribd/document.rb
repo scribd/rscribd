@@ -1,5 +1,7 @@
 require 'uri'
 require 'open-uri'
+require 'rubygems'
+require 'addressable/uri'
 
 module Scribd
   
@@ -129,12 +131,12 @@ module Scribd
         fields[:rev_id] = fields.delete(:doc_id)
 
         begin
-          uri = URI.parse @attributes[:file]
+          uri = URI.parse normalized_uri(@attributes[:file])
         rescue URI::InvalidURIError
           uri = nil # Some valid file paths are not valid URI's (but some are)
         end
         if uri.kind_of? URI::HTTP or uri.kind_of? URI::HTTPS or uri.kind_of? URI::FTP then
-          fields[:url] = @attributes[:file]
+          fields[:url] = uri.to_s
           response = API.instance.send_request 'docs.uploadFromUrl', fields
         elsif uri.kind_of? URI::Generic or uri.nil? then
           file_obj = is_file_object ? file : File.open(file, 'rb')
@@ -155,7 +157,7 @@ module Scribd
 
       if thumb = fields.delete(:thumbnail) then
         begin
-          uri = URI.parse(thumb)
+          uri = URI.parse normalized_uri(thumb)
         rescue URI::InvalidURIError
           uri = nil
         end
@@ -466,6 +468,14 @@ module Scribd
       @download_urls[format] ||= begin
         response = API.instance.send_request('docs.getDownloadUrl', :doc_id => self.id, :doc_type => format)
         response.elements['/rsp/download_link'].cdatas.first.to_s
+      end
+    end
+
+    def normalized_uri(uri)
+      if uri.kind_of? String
+        ::Addressable::URI.parse(uri).normalize.to_s
+      else
+        uri
       end
     end
   end
