@@ -14,6 +14,7 @@ begin
     gemspec.rubyforge_project = "rscribd"
     
     gemspec.add_dependency 'mime-types'
+    gemspec.add_dependency 'addressable'
     gemspec.add_development_dependency "rspec"
     gemspec.add_development_dependency "yard"
   end
