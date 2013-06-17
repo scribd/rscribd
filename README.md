@@ -2,21 +2,21 @@
 
 * 1.3.0 (July 5, 2011)
 
-## DESCRIPTION:
+## DESCRIPTION
 
 This gem provides a simple and powerful library for the Scribd API, allowing you
 to write Ruby applications or Ruby on Rails websites that upload, convert,
 display, search, and control documents in many formats. For more information on
 the Scribd platform, visit the Developer web page on Scribd.
 
-## FEATURES:
+## FEATURES
 
 * Upload your documents to Scribd's servers and access them using the gem
 * Upload local files or from remote web sites
 * Search, tag, and organize documents
 * Associate documents with your users' accounts
 
-## SYNOPSIS:
+## SYNOPSIS
 
 This API allows you to use Scribd's Flash viewer on your website. You'll be able
 to take advantage of Scribd's scalable document conversion system to convert
@@ -34,6 +34,7 @@ will need these to authenticate you:
 require 'rscribd'
 Scribd::API.instance.key = 'your API key'
 Scribd::API.instance.secret = 'your API secret'
+```
 
 Next, log into the Scribd website:
 
@@ -48,21 +49,21 @@ upload a document:
 doc = Scribd::Document.upload(:file => 'your-file.pdf')
 ```
 
-For more information, please see the documentation for the Scribd::API,
-Scribd::User, and Scribd::Document classes. (You can also check out the docs for
+For more information, please see the documentation for the `Scribd::API`,
+`Scribd::User`, and `Scribd::Document` classes. (You can also check out the docs for
 the other classes for a more in-depth look at this gem's features).
 
-## REQUIREMENTS:
+## REQUIREMENTS
 
 * A Scribd API account
 * Ruby 1.8 or newer, with RubyGems 1.3 or newer.
-* (optional) [multipart-post](https://github.com/scribd/rscribd.git) gem by Nick Sieger
+* (optional) [multipart-post gem by Nick Sieger](https://github.com/scribd/rscribd.git)
 
-## INSTALL:
+## INSTALL
 
-  sudo gem install rscribd
+    sudo gem install rscribd
 
-* To use the optional multipart-post gem by Nick Sieger, make sure it is available in the load path and call
+To use the optional multipart-post gem by Nick Sieger, make sure it is available in the load path and call:
 
 ```ruby
 Scribd::API.instance.enable_multipart_post_gem
@@ -71,7 +72,7 @@ Scribd::API.instance.enable_multipart_post_gem
 Scribd::API.instance.disable_multipart_post_gem
 ```
 
-## LICENSE:
+## LICENSE
 
 (The MIT License)
 
