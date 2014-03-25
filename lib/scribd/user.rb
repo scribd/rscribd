@@ -187,7 +187,7 @@ module Scribd
 
     # @private
     def to_s
-      @attributes[:username]
+      @attributes[:username].to_s
     end
   end
 end

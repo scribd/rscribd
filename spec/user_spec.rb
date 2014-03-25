@@ -276,4 +276,15 @@ describe Scribd::User do
       Scribd::API.instance.user.should eql(user)
     end
   end
+  
+  describe "User without attributes" do
+    before :each do
+      @user = Scribd::User.new()
+    end
+    
+    it "should return an empty string when requested for its string representation" do
+      @user.to_s.should eql('')
+    end
+  end
+  
 end
